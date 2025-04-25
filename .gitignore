@@ -1,0 +1,43 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Output of the go coverage tool
+*.coverprofile
+
+# Dependency directories (remove the comment below if you use Go modules)
+vendor/
+
+# Go workspace file (optional if you're using Go workspaces)
+go.work
+go.work.sum
+
+# Environment files
+.env
+.env.*
+
+# IDE / Editor configs
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Build directories
+bin/
+build/
+dist/
+
+# Qodo folder (probably local dev tool config/cache)
+.qodo/
+
+.qodo
