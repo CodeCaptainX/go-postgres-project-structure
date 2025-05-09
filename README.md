@@ -202,3 +202,92 @@ goose -dir migrations create your_migration_name sql
 
 This creates a new timestamped `.sql` file inside the `migrations/` directory.
 
+# Redis Installation Guide
+This project may require Redis for caching, session storage, or other purposes.
+
+## Install Redis on Ubuntu
+
+### 1. Update package index
+````markdown
+
+
+```bash
+sudo apt update
+````
+
+### 2. Install Redis server
+
+```bash
+sudo apt install redis-server -y
+```
+
+### 3. Enable and start Redis
+
+```bash
+sudo systemctl enable redis
+sudo systemctl start redis
+```
+
+### 4. Check Redis status
+
+```bash
+sudo systemctl status redis
+```
+
+You should see `active (running)` in the output.
+
+### 5. Test Redis
+
+```bash
+redis-cli ping
+```
+
+Expected output:
+
+```
+PONG
+```
+
+## Configuration (Optional)
+
+If you want Redis to run as a background service:
+
+1. Open the Redis config file:
+
+```bash
+sudo nano /etc/redis/redis.conf
+```
+
+2. Find the line:
+
+```
+supervised no
+```
+
+3. Change it to:
+
+```
+supervised systemd
+```
+
+4. Save and restart Redis:
+
+```bash
+sudo systemctl restart redis
+```
+
+## Uninstall Redis (if needed)
+
+```bash
+sudo apt remove redis-server -y
+```
+
+## Useful Commands
+
+```bash
+redis-cli            # Open Redis command-line interface
+redis-cli ping       # Check if Redis is working
+redis-cli flushall   # Clear all keys from all databases (⚠️ use with caution)
+```
+
+
