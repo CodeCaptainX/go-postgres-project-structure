@@ -8,9 +8,9 @@ CREATE TABLE tbl_users(
     email VARCHAR(255) NOT NULL,
     login_session TEXT NULL,
     profile_photo TEXT NULL,
-    member_alias VARCHAR(255) NULL,
+   user_alias VARCHAR(255) NULL,
     phone_number VARCHAR NULL,
-    member_avatar_id INTEGER NULL,
+   user_avatar_id INTEGER NULL,
     commission DECIMAL (10,2) NULL DEFAULT 0,
     last_access TIMESTAMP WITHOUT TIME ZONE,
     status_id SMALLINT DEFAULT 1,
@@ -26,7 +26,7 @@ CREATE TABLE tbl_users(
 -- +goose StatementBegin
 INSERT INTO tbl_users (
     first_name, last_name, user_name, password, email, login_session, 
-    profile_photo, member_alias, phone_number, member_avatar_id, 
+    profile_photo,user_alias, phone_number,user_avatar_id, 
     commission, last_access, status_id, "order", 
     created_by, created_at, updated_by, updated_at, deleted_by, deleted_at
 ) VALUES
