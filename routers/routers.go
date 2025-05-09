@@ -25,7 +25,8 @@ func New() *fiber.App {
 				language.MustParse("km"),
 				language.English,
 			},
-			DefaultLanguage: language.Khmer,
+			FormatBundleFile: "json",
+			DefaultLanguage:  language.Khmer,
 		}),
 	)
 	return f

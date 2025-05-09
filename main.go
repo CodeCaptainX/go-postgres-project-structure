@@ -6,8 +6,6 @@ import (
 	database "snack-shop/config/database"
 	redis "snack-shop/config/redis"
 	"snack-shop/handler"
-	custom_log "snack-shop/pkg/custom_log"
-	translate "snack-shop/pkg/utils"
 	routers "snack-shop/routers"
 )
 
@@ -24,11 +22,6 @@ func main() {
 
 	// Initialize redis client
 	rdb := redis.NewRedisClient()
-
-	// Initialize the translate
-	if err := translate.Init(); err != nil {
-		custom_log.NewCustomLog("Failed_initialize_i18n", err.Err.Error(), "error")
-	}
 
 	handler.NewFrontService(app, db_pool, rdb)
 

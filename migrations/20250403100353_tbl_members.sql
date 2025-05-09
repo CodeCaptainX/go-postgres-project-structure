@@ -1,5 +1,5 @@
 -- +goose Up
-CREATE TABLE tbl_members(
+CREATE TABLE tbl_users(
     id SERIAL PRIMARY KEY,
     first_name VARCHAR(255) NOT NULL,
     last_name VARCHAR(255) NOT NULL,
@@ -24,14 +24,14 @@ CREATE TABLE tbl_members(
 );
 
 -- +goose StatementBegin
-INSERT INTO tbl_members (
+INSERT INTO tbl_users (
     first_name, last_name, user_name, password, email, login_session, 
     profile_photo, member_alias, phone_number, member_avatar_id, 
     commission, last_access, status_id, "order", 
     created_by, created_at, updated_by, updated_at, deleted_by, deleted_at
 ) VALUES
 (
-    'John', 'Doe', 'johndoe', 'hashedpassword1', 'johndoe@example.com', NULL, 
+    'John', 'Doe', 'admin', '123', 'johndoe@example.com', NULL, 
     NULL, 'JD', '1234567890', NULL, 
     5.50, NOW(), 1, 1, 
     1, NOW(), NULL, NULL, NULL, NULL
@@ -51,4 +51,4 @@ INSERT INTO tbl_members (
 -- +goose StatementEnd
 
 -- +goose Down
-DROP TABLE IF EXISTS tbl_members;
+DROP TABLE IF EXISTS tbl_users;

@@ -1,0 +1,10 @@
+{
+    "login_invalid": "ព័ត៌មានចូលមិនត្រឹមត្រូវ។",
+    "login_success": "បានចូលដោយជោគជ័យ។",
+    "member_info_id": "លេខសម្គាល់ព័ត៌មានសមាជិក។",
+    "uuid_generate_failed": "បរាជ័យក្នុងការបង្កើត UUID។",
+    "session_update_failed": "បរាជ័យក្នុងការធ្វើបច្ចុប្បន្នភាពសម័យ។",
+    "jwt_failed": "បរាជ័យក្នុងការប្រើប្រាស់ JWT។",
+    "invalid_session_id": "លេខសម្គាល់សម័យមិនត្រឹមត្រូវ។",
+    "login_session_invalid": "សម័យចូលមិនត្រឹមត្រូវ។"
+}

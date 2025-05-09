@@ -46,7 +46,7 @@ func (a *authRepositoryImpl) Login(username, password string) (*AuthResponse, *u
 			user_name,
 			email,
 			password
-		FROM tbl_members 
+		FROM tbl_users 
 		WHERE user_name = $1 AND password = $2 AND deleted_at IS NULL
 	`
 
@@ -84,7 +84,7 @@ func (a *authRepositoryImpl) Login(username, password string) (*AuthResponse, *u
 	secretKey := os.Getenv("JWT_SECRET_KEY")
 
 	updateQuery := `	
-		UPDATE tbl_members
+		UPDATE tbl_users
 		SET login_session = $1
 		WHERE id = $2
 	`
@@ -131,7 +131,7 @@ func (a *authRepositoryImpl) CheckSession(loginSession string, memberID float64)
 
 	query := `
 		SELECT login_session
-		FROM tbl_members
+		FROM tbl_users
 		WHERE login_session = $1
 	`
 	err = a.dbPool.Get(&storedLoginSession, query, loginSession)

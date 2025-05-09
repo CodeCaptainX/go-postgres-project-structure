@@ -28,16 +28,7 @@ func (a *AuthHandler) Login(c *fiber.Ctx) error {
 	req := &AuthLoginRequest{}
 
 	if err := req.bind(c, v); err != nil {
-		msg, errMsg := utils.TranslateWithError(c, "login_invalid")
-		if errMsg != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(
-				utils.NewResponseError(
-					errMsg.ErrorString(),
-					constants.Translate_failed,
-					errMsg.Err,
-				),
-			)
-		}
+		msg := utils.Translate(c, nil, "login_invalid")
 		return c.Status(fiber.StatusUnprocessableEntity).JSON(
 			utils.NewResponseError(
 				msg,
@@ -50,14 +41,7 @@ func (a *AuthHandler) Login(c *fiber.Ctx) error {
 	success, err := a.authService.Login(req.Auth.Username, req.Auth.Password)
 
 	if err != nil {
-		msg, msgErr := utils.TranslateWithError(c, err.MessageID)
-		if msgErr != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(utils.NewResponseError(
-				msgErr.Err.Error(),
-				constants.Translate_failed,
-				msgErr.Err,
-			))
-		}
+		msg := utils.Translate(c, nil, err.MessageID)
 		return c.Status(fiber.StatusUnauthorized).JSON(utils.NewResponseError(
 			msg,
 			constants.LoginFailed,
@@ -65,14 +49,8 @@ func (a *AuthHandler) Login(c *fiber.Ctx) error {
 		))
 	}
 
-	msg, errMsg := utils.TranslateWithError(c, "login_success")
-	if errMsg != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(utils.NewResponseError(
-			errMsg.ErrorString(),
-			constants.Translate_failed,
-			errMsg.Err,
-		))
-	}
+	msg := utils.Translate(c, nil, "login_success")
+
 	return c.Status(fiber.StatusOK).JSON(utils.NewResponse(
 		msg,
 		constants.Login_success,

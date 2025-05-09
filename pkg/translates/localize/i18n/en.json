@@ -1,0 +1,10 @@
+{
+    "login_invalid": "Invalid login credentials.",
+    "login_success": "Login successful.",
+    "member_info_id": "Member information ID.",
+    "uuid_generate_failed": "Failed to generate UUID.",
+    "session_update_failed": "Failed to update session.",
+    "jwt_failed": "JWT processing failed.",
+    "invalid_session_id": "Invalid session ID.",
+    "login_session_invalid": "Login session is invalid."
+}

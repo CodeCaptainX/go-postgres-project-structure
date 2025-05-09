@@ -80,9 +80,9 @@ func handleUserContext(c *fiber.Ctx, uclaim jwt.MapClaims, db *sqlx.DB, redis *r
 	login_session, ok := uclaim["login_session"].(string)
 	if !ok || login_session == "" {
 		smg_error := custom_translate.NewResponseError(
-			custom_translate.Translate(c, "login_session_missing"),
+			custom_translate.Translate(c, nil, "login_session_missing"),
 			-500,
-			fmt.Errorf("%s", custom_translate.Translate(c, "login_session_missing")),
+			fmt.Errorf("%s", custom_translate.Translate(c, nil, "login_session_missing")),
 		)
 		return c.Status(http.StatusUnprocessableEntity).JSON(smg_error)
 	}
@@ -101,9 +101,9 @@ func handleUserContext(c *fiber.Ctx, uclaim jwt.MapClaims, db *sqlx.DB, redis *r
 	success, err := sv.CheckSession(login_session, uCtx.PlayerID)
 	if err != nil || !success {
 		smg_error := custom_translate.NewResponseError(
-			custom_translate.Translate(c, "login_session_invalid"),
+			custom_translate.Translate(c, nil, "login_session_invalid"),
 			-500,
-			fmt.Errorf("%s", custom_translate.Translate(c, "login_session_invalid")),
+			fmt.Errorf("%s", custom_translate.Translate(c, nil, "login_session_invalid")),
 		)
 		return c.Status(http.StatusUnprocessableEntity).JSON(smg_error)
 	}
