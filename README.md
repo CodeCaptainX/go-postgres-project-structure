@@ -163,12 +163,10 @@ Supports English, Khmer, and Chinese via Fiber i18n middleware.
 
 ---
 
-````markdown
 # Goose Setup Guide
-
 This project uses [Goose](https://github.com/pressly/goose) for managing PostgreSQL database migrations.
-
 ## Install Goose
+````markdown
 
 ```bash
 go install github.com/pressly/goose/v3/cmd/goose@latest
