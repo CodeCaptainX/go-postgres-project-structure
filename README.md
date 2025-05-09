@@ -109,22 +109,22 @@ Ensure you have a migration tool like `migrate` or `goose`.
 ### Migrate Up (Create Tables)
 
 ```bash
-make migrate-up
+make up
 ```
 
 ### Migrate Down (Drop All Tables)
 
 ```bash
-make migrate-down
+make down
 ```
 
 Your `Makefile` should include:
 
 ```makefile
-migrate-up:
+up:
 	migrate -path internal/migrations -database $$DATABASE_URL up
 
-migrate-down:
+down:
 	migrate -path internal/migrations -database $$DATABASE_URL down
 ```
 
