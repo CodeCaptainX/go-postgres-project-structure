@@ -162,12 +162,3 @@ Supports English, Khmer, and Chinese via Fiber i18n middleware.
 * `make` for build tasks
 
 ---
-
-## 🧾 License
-
-MIT
-
-```
-
-Let me know if you want to include instructions for Docker, Swagger docs, or unit testing.
-```
