@@ -10,8 +10,7 @@ import (
 
 	"snack-shop/pkg/custom_log"
 	redis_util "snack-shop/pkg/redis"
-	"snack-shop/pkg/utils/env"
-	"snack-shop/pkg/utils/error"
+	utils "snack-shop/pkg/utils"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -21,8 +20,8 @@ import (
 )
 
 type AuthRepository interface {
-	Login(username, password string) (*AuthResponse, *error.ErrorResponse)
-	CheckSession(loginSession string, userID float64) (bool, *error.ErrorResponse)
+	Login(username, password string) (*AuthResponse, *utils.ErrorResponse)
+	CheckSession(loginSession string, userID float64) (bool, *utils.ErrorResponse)
 }
 
 type authRepositoryImpl struct {
@@ -37,9 +36,9 @@ func NewAuthRepository(dbPool *sqlx.DB, redisClient *redis.Client) AuthRepositor
 	}
 }
 
-func (a *authRepositoryImpl) Login(username, password string) (*AuthResponse, *error.ErrorResponse) {
+func (a *authRepositoryImpl) Login(username, password string) (*AuthResponse, *utils.ErrorResponse) {
 	var member MemberData
-	msg := error.ErrorResponse{}
+	msg := utils.ErrorResponse{}
 
 	query := `
 		SELECT
@@ -59,7 +58,7 @@ func (a *authRepositoryImpl) Login(username, password string) (*AuthResponse, *e
 
 	var res AuthResponse
 
-	hours := env.GetenvInt("JWT_EXP_HOUR", 7)
+	hours := utils.GetenvInt("JWT_EXP_HOUR", 7)
 	expirationTime := time.Now().Add(time.Duration(hours) * time.Hour)
 	loginSession, err := uuid.NewV7()
 
@@ -115,8 +114,8 @@ func (a *authRepositoryImpl) Login(username, password string) (*AuthResponse, *e
 	return &res, nil
 }
 
-func (a *authRepositoryImpl) CheckSession(loginSession string, memberID float64) (bool, *error.ErrorResponse) {
-	msg := error.ErrorResponse{}
+func (a *authRepositoryImpl) CheckSession(loginSession string, memberID float64) (bool, *utils.ErrorResponse) {
+	msg := utils.ErrorResponse{}
 
 	key := fmt.Sprintf("member: %d", int(memberID))
 	redisUtil := redis_util.NewRedisUtil(a.redis)

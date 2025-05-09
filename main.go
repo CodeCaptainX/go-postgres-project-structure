@@ -7,7 +7,7 @@ import (
 	redis "snack-shop/config/redis"
 	"snack-shop/handler"
 	custom_log "snack-shop/pkg/custom_log"
-	translate "snack-shop/pkg/utils/translate"
+	translate "snack-shop/pkg/utils"
 	routers "snack-shop/routers"
 )
 

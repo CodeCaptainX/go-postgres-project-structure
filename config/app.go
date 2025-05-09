@@ -3,7 +3,7 @@ package configs
 import (
 	"log"
 	"os"
-	env "snack-shop/pkg/utils/env"
+	env "snack-shop/pkg/utils"
 
 	"github.com/joho/godotenv"
 )

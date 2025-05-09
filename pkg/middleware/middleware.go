@@ -10,8 +10,7 @@ import (
 
 	auth "snack-shop/internal/auth"
 	custom_models "snack-shop/pkg/model"
-	"snack-shop/pkg/utils/response"
-	custom_translate "snack-shop/pkg/utils/translate"
+	custom_translate "snack-shop/pkg/utils"
 
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
@@ -80,7 +79,7 @@ func handleUserContext(c *fiber.Ctx, uclaim jwt.MapClaims, db *sqlx.DB, redis *r
 
 	login_session, ok := uclaim["login_session"].(string)
 	if !ok || login_session == "" {
-		smg_error := response.NewResponseError(
+		smg_error := custom_translate.NewResponseError(
 			custom_translate.Translate(c, "login_session_missing"),
 			-500,
 			fmt.Errorf("%s", custom_translate.Translate(c, "login_session_missing")),
@@ -101,7 +100,7 @@ func handleUserContext(c *fiber.Ctx, uclaim jwt.MapClaims, db *sqlx.DB, redis *r
 	sv := auth.NewAuthService(db, redis)
 	success, err := sv.CheckSession(login_session, uCtx.PlayerID)
 	if err != nil || !success {
-		smg_error := response.NewResponseError(
+		smg_error := custom_translate.NewResponseError(
 			custom_translate.Translate(c, "login_session_invalid"),
 			-500,
 			fmt.Errorf("%s", custom_translate.Translate(c, "login_session_invalid")),

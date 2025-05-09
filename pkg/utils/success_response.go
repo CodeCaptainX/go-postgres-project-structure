@@ -1,4 +1,4 @@
-package response
+package utils
 
 type Response struct {
 	Success    bool        `json:"success"`

@@ -2,8 +2,7 @@ package auth
 
 import (
 	constants "snack-shop/pkg/constants"
-	"snack-shop/pkg/utils/response"
-	"snack-shop/pkg/utils/translate"
+	utils "snack-shop/pkg/utils"
 	custom_validator "snack-shop/pkg/validator"
 
 	"github.com/gofiber/fiber/v2"
@@ -29,10 +28,10 @@ func (a *AuthHandler) Login(c *fiber.Ctx) error {
 	req := &AuthLoginRequest{}
 
 	if err := req.bind(c, v); err != nil {
-		msg, errMsg := translate.TranslateWithError(c, "login_invalid")
+		msg, errMsg := utils.TranslateWithError(c, "login_invalid")
 		if errMsg != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(
-				response.NewResponseError(
+				utils.NewResponseError(
 					errMsg.ErrorString(),
 					constants.Translate_failed,
 					errMsg.Err,
@@ -40,7 +39,7 @@ func (a *AuthHandler) Login(c *fiber.Ctx) error {
 			)
 		}
 		return c.Status(fiber.StatusUnprocessableEntity).JSON(
-			response.NewResponseError(
+			utils.NewResponseError(
 				msg,
 				constants.Login_invalid,
 				err,
@@ -51,30 +50,30 @@ func (a *AuthHandler) Login(c *fiber.Ctx) error {
 	success, err := a.authService.Login(req.Auth.Username, req.Auth.Password)
 
 	if err != nil {
-		msg, msgErr := translate.TranslateWithError(c, err.MessageID)
+		msg, msgErr := utils.TranslateWithError(c, err.MessageID)
 		if msgErr != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(response.NewResponseError(
+			return c.Status(fiber.StatusBadRequest).JSON(utils.NewResponseError(
 				msgErr.Err.Error(),
 				constants.Translate_failed,
 				msgErr.Err,
 			))
 		}
-		return c.Status(fiber.StatusUnauthorized).JSON(response.NewResponseError(
+		return c.Status(fiber.StatusUnauthorized).JSON(utils.NewResponseError(
 			msg,
 			constants.LoginFailed,
 			err.Err,
 		))
 	}
 
-	msg, errMsg := translate.TranslateWithError(c, "login_success")
+	msg, errMsg := utils.TranslateWithError(c, "login_success")
 	if errMsg != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(response.NewResponseError(
+		return c.Status(fiber.StatusBadRequest).JSON(utils.NewResponseError(
 			errMsg.ErrorString(),
 			constants.Translate_failed,
 			errMsg.Err,
 		))
 	}
-	return c.Status(fiber.StatusOK).JSON(response.NewResponse(
+	return c.Status(fiber.StatusOK).JSON(utils.NewResponse(
 		msg,
 		constants.Login_success,
 		success,

@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"snack-shop/pkg/utils/error"
+	utils "snack-shop/pkg/utils"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/redis/go-redis/v9"
@@ -9,8 +9,8 @@ import (
 
 // AuthService defines the service layer for authentication
 type AuthService interface {
-	Login(username, password string) (*AuthResponse, *error.ErrorResponse)
-	CheckSession(loginSession string, userID float64) (bool, *error.ErrorResponse)
+	Login(username, password string) (*AuthResponse, *utils.ErrorResponse)
+	CheckSession(loginSession string, userID float64) (bool, *utils.ErrorResponse)
 }
 
 // authServiceImpl implements AuthService
@@ -25,10 +25,10 @@ func NewAuthService(dbPool *sqlx.DB, redisClient *redis.Client) AuthService {
 	}
 }
 
-func (a *authServiceImpl) Login(username, password string) (*AuthResponse, *error.ErrorResponse) {
+func (a *authServiceImpl) Login(username, password string) (*AuthResponse, *utils.ErrorResponse) {
 	return a.repo.Login(username, password)
 }
 
-func (a *authServiceImpl) CheckSession(loginSession string, userID float64) (bool, *error.ErrorResponse) {
+func (a *authServiceImpl) CheckSession(loginSession string, userID float64) (bool, *utils.ErrorResponse) {
 	return a.repo.CheckSession(loginSession, userID)
 }

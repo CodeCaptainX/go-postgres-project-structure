@@ -1,11 +1,10 @@
-package translate
+package utils
 
 import (
 	"fmt"
 	"log"
 	"path/filepath"
 	custom_log "snack-shop/pkg/custom_log"
-	errors "snack-shop/pkg/utils/error"
 
 	"github.com/gofiber/contrib/fiberi18n/v2"
 	"github.com/gofiber/fiber/v2"
@@ -16,7 +15,7 @@ import (
 
 var bundle *i18n.Bundle
 
-func Init() *errors.ErrorResponse {
+func Init() *ErrorResponse {
 	bundle = i18n.NewBundle(language.English)
 	bundle.RegisterUnmarshalFunc("yaml", yaml.Unmarshal)
 
@@ -30,7 +29,7 @@ func Init() *errors.ErrorResponse {
 		if err != nil {
 			log.Printf("Error loading local file %s: %v", file, err)
 			custom_log.NewCustomLog("translate_error", err.Error(), "error")
-			return &errors.ErrorResponse{
+			return &ErrorResponse{
 				MessageID: "ErrorLoadMessage",
 				Err:       err,
 			}
@@ -39,10 +38,10 @@ func Init() *errors.ErrorResponse {
 	return nil
 }
 
-func TranslateWithError(c *fiber.Ctx, key string, templateData ...map[string]interface{}) (string, *errors.ErrorResponse) {
+func TranslateWithError(c *fiber.Ctx, key string, templateData ...map[string]interface{}) (string, *ErrorResponse) {
 	if bundle == nil {
 		custom_log.NewCustomLog("I18nNotInit", Init().ErrorString(), "error")
-		return "", &errors.ErrorResponse{
+		return "", &ErrorResponse{
 			MessageID: key,
 			Err:       fmt.Errorf("Translation service is unavailable for MessageID: %s", key),
 		}
@@ -63,7 +62,7 @@ func TranslateWithError(c *fiber.Ctx, key string, templateData ...map[string]int
 	if err != nil {
 		log.Printf("Error localizing message ID %s: %v", key, err)
 		custom_log.NewCustomLog("TranslationNotFound", err.Error(), "error")
-		return "", &errors.ErrorResponse{
+		return "", &ErrorResponse{
 			MessageID: key,
 			Err:       fmt.Errorf("Translation not found for MessageID: %s", key),
 		}
