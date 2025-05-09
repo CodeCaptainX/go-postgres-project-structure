@@ -162,3 +162,45 @@ Supports English, Khmer, and Chinese via Fiber i18n middleware.
 * `make` for build tasks
 
 ---
+
+````markdown
+# Goose Setup Guide
+
+This project uses [Goose](https://github.com/pressly/goose) for managing PostgreSQL database migrations.
+
+## Install Goose
+
+```bash
+go install github.com/pressly/goose/v3/cmd/goose@latest
+````
+
+Make sure your `$GOPATH/bin` is in your `$PATH`:
+
+```bash
+export PATH="$PATH:$(go env GOPATH)/bin"
+```
+
+To make it permanent, add the line above to your shell config file (`~/.bashrc`, `~/.zshrc`, etc.).
+
+## Common Commands
+
+### Run all migrations
+
+```bash
+goose -dir migrations postgres "postgresql://postgres:123456@localhost:5432/test_db_01?sslmode=disable" up
+```
+
+### Rollback the last migration
+
+```bash
+goose -dir migrations postgres "postgresql://postgres:123456@localhost:5432/test_db_01?sslmode=disable" down
+```
+
+### Create a new migration
+
+```bash
+goose -dir migrations create your_migration_name sql
+```
+
+This creates a new timestamped `.sql` file inside the `migrations/` directory.
+
