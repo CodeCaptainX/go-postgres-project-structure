@@ -162,3 +162,132 @@ Supports English, Khmer, and Chinese via Fiber i18n middleware.
 * `make` for build tasks
 
 ---
+
+# Goose Setup Guide
+This project uses [Goose](https://github.com/pressly/goose) for managing PostgreSQL database migrations.
+## Install Goose
+````markdown
+
+```bash
+go install github.com/pressly/goose/v3/cmd/goose@latest
+````
+
+Make sure your `$GOPATH/bin` is in your `$PATH`:
+
+```bash
+export PATH="$PATH:$(go env GOPATH)/bin"
+```
+
+To make it permanent, add the line above to your shell config file (`~/.bashrc`, `~/.zshrc`, etc.).
+
+## Common Commands
+
+### Run all migrations
+
+```bash
+goose -dir migrations postgres "postgresql://postgres:123456@localhost:5432/test_db_01?sslmode=disable" up
+```
+
+### Rollback the last migration
+
+```bash
+goose -dir migrations postgres "postgresql://postgres:123456@localhost:5432/test_db_01?sslmode=disable" down
+```
+
+### Create a new migration
+
+```bash
+goose -dir migrations create your_migration_name sql
+```
+
+This creates a new timestamped `.sql` file inside the `migrations/` directory.
+
+# Redis Installation Guide
+This project may require Redis for caching, session storage, or other purposes.
+
+## Install Redis on Ubuntu
+
+### 1. Update package index
+````markdown
+
+
+```bash
+sudo apt update
+````
+
+### 2. Install Redis server
+
+```bash
+sudo apt install redis-server -y
+```
+
+### 3. Enable and start Redis
+
+```bash
+sudo systemctl enable redis
+sudo systemctl start redis
+```
+
+### 4. Check Redis status
+
+```bash
+sudo systemctl status redis
+```
+
+You should see `active (running)` in the output.
+
+### 5. Test Redis
+
+```bash
+redis-cli ping
+```
+
+Expected output:
+
+```
+PONG
+```
+
+## Configuration (Optional)
+
+If you want Redis to run as a background service:
+
+1. Open the Redis config file:
+
+```bash
+sudo nano /etc/redis/redis.conf
+```
+
+2. Find the line:
+
+```
+supervised no
+```
+
+3. Change it to:
+
+```
+supervised systemd
+```
+
+4. Save and restart Redis:
+
+```bash
+sudo systemctl restart redis
+```
+
+## Uninstall Redis (if needed)
+
+```bash
+sudo apt remove redis-server -y
+```
+
+## Useful Commands
+
+```bash
+redis-cli            # Open Redis command-line interface
+redis-cli ping       # Check if Redis is working
+redis-cli flushall   # Clear all keys from all databases (⚠️ use with caution)
+```
+
+
