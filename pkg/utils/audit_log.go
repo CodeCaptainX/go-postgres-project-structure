@@ -24,7 +24,7 @@ func AddMemeberAuditLog(user_id int, audit_context string, audit_desc string, au
 		) VALUES (
 		$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
 		)`
-	app_timezone := os.Getenv("TIME_ZONE")
+	app_timezone := os.Getenv("APP_TIMEZONE")
 	location, err := time.LoadLocation(app_timezone)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load location: %w", err)

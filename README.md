@@ -55,7 +55,7 @@ DATABASE_URL="postgresql://postgres:123456@localhost:5432/test_db_01?sslmode=dis
 API_HOST="127.0.0.1"
 API_PORT="8887"
 
-TIME_ZONE="Asia/Phnom_Penh"
+APP_TIMEZONE="Asia/Phnom_Penh"
 
 # JWT
 JWT_SECRET_KEY="your_secret_key"
@@ -68,7 +68,7 @@ DEFAULT_FORMAT_DATE="Y/m/d"
 DEFAULT_FORMAT_DATE_RESPONSE="Y/m/d H:i:s AM"
 
 # Context
-PLAYER_CONTEXT="yourContext"
+USERCONTEXT="userContext"
 
 # Redis
 REDIS_HOST="127.0.0.1"
