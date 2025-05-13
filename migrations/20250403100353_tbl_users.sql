@@ -1,57 +1,49 @@
 -- +goose Up
--- Enable uuid extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
+-- USERS TABLE
 CREATE TABLE tbl_users (
     id SERIAL PRIMARY KEY,
-    user_uuid UUID NOT NULL DEFAULT uuid_generate_v4(), -- Added UUID column
-    first_name VARCHAR(255) NOT NULL,
-    last_name VARCHAR(255) NOT NULL,
-    user_name VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    login_session TEXT NULL,
-    profile_photo TEXT NULL,
-    user_alias VARCHAR(255) NULL,
-    phone_number VARCHAR NULL,
-    user_avatar_id INTEGER NULL,
-    commission DECIMAL (10,2) NULL DEFAULT 0,
-    last_access TIMESTAMP WITHOUT TIME ZONE,
-    status_id SMALLINT DEFAULT 1,
-    "order" INTEGER NULL DEFAULT 1,
-    created_by INTEGER,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_uuid UUID NOT NULL UNIQUE,
+    first_name VARCHAR  NULL,
+    last_name VARCHAR NULL,
+    user_name VARCHAR NOT NULL,
+    password VARCHAR NOT NULL,
+    email VARCHAR NOT NULL,
+    role_id INTEGER NOT NULL ,
+    status BOOLEAN NOT NULL,
+    login_session VARCHAR,
+    profile_photo VARCHAR,
+    user_alias VARCHAR,
+    phone_number VARCHAR,
+    user_avatar_id INTEGER,
+    commission DECIMAL DEFAULT 0.00,
+    status_id INTEGER NOT NULL DEFAULT 1,
+    "order" INTEGER DEFAULT 1,
+    created_by INTEGER NOT NULL,
+    created_at TIMESTAMP NOT NULL,
     updated_by INTEGER,
-    updated_at TIMESTAMP WITHOUT TIME ZONE,
+    updated_at TIMESTAMP,
     deleted_by INTEGER,
-    deleted_at TIMESTAMP WITHOUT TIME ZONE
+    deleted_at TIMESTAMP
 );
 
 -- +goose StatementBegin
 INSERT INTO tbl_users (
-    user_uuid, first_name, last_name, user_name, password, email, login_session, 
-    profile_photo, user_alias, phone_number, user_avatar_id, 
-    commission, last_access, status_id, "order", 
+    user_uuid, first_name, last_name, user_name, password, email,
+    role_id, status, login_session, profile_photo, user_alias,
+    phone_number, user_avatar_id, commission, status_id, "order",
     created_by, created_at, updated_by, updated_at, deleted_by, deleted_at
-) VALUES
+) VALUES 
 (
-    uuid_generate_v4(), 'John', 'Doe', 'admin', '123', 'johndoe@example.com', NULL, 
-    NULL, 'JD', '1234567890', NULL, 
-    5.50, NOW(), 1, 1, 
-    1, NOW(), NULL, NULL, NULL, NULL
+    'c5b66b62-2cb0-4a2e-b704-1da97d8ed10d', 'Supper', 'Admin', 'ADMIN', '123',
+    'admin@gmail.com', 1, true, 'bdeb581454a4441784be1e355faeab63',
+    'user1.png', 'KM001', '010123123', NULL, 0.00, 1, 1, 1, NOW(), NULL, NULL, NULL, NULL
 ),
 (
-    uuid_generate_v4(), 'Jane', 'Smith', 'janesmith', 'hashedpassword2', 'janesmith@example.com', NULL, 
-    NULL, 'JS', '0987654321', NULL, 
-    10.00, NOW(), 1, 2, 
-    1, NOW(), NULL, NULL, NULL, NULL
-),
-(
-    uuid_generate_v4(), 'Alice', 'Brown', 'alicebrown', 'hashedpassword3', 'alicebrown@example.com', NULL, 
-    NULL, 'AB', '5551234567', NULL, 
-    7.75, NOW(), 1, 3, 
-    1, NOW(), NULL, NULL, NULL, NULL
+    '83751b48-68f3-4805-a7bd-60ab8311936d', 'IT', 'Developer', 'IT', '12e!!121#',
+    'it@gmail.com', 1, true, 'bdeb581454a4441784be1e355faeab57',
+    'user2.png', 'KM002', '430123123', NULL, 0.00, 1, 1, 1, NOW(), NULL, NULL, NULL, NULL
 );
+
 -- +goose StatementEnd
 
 -- +goose Down

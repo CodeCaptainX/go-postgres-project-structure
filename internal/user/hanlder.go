@@ -25,11 +25,12 @@ func NewHandler(db *sqlx.DB) *UserHandler {
 	return &UserHandler{
 		db: db,
 		userService: func(c *fiber.Ctx) UserCreator {
-			userContext := c.Locals("UserContext")
-			// fmt.Println("xxxxx", userContext)
+			UserContext := c.Locals("UserContext")
+			// fmt.Println("🚀 ~ file: hanlder.go ~ line 29 ~ userService:func ~ UserContext : ", UserContext)
+
 			var uCtx types.UserContext
 			// Convert map to UserContext struct
-			if contextMap, ok := userContext.(types.UserContext); ok {
+			if contextMap, ok := UserContext.(types.UserContext); ok {
 				uCtx = contextMap
 			} else {
 				custom_log.NewCustomLog("user_context_failed", "Failed to cast UserContext to map[string]interface{}", "warn")

@@ -43,22 +43,22 @@ type User struct {
 	UserName     string          `db:"user_name"`
 	Email        string          `db:"email"`
 	RoleId       int             `db:"role_id"`
-	Role         string          `db:"role"`
-	Status       bool            `db:"status"`
+	RoleName     string          `db:"role_name"` // from ur.user_role_name (was incorrect as int)
+	Status       string          `db:"status"`    // assuming PostgreSQL BOOLEAN column
 	LoginSession *string         `db:"login_session"`
 	ProfilePhoto *string         `db:"profile_photo"`
 	UserAlias    *string         `db:"user_alias"`
 	PhoneNumber  *string         `db:"phone_number"`
-	UserAvatarID *float64        `db:"user_avatar_id"`
+	UserAvatarID *int            `db:"user_avatar_id"`
 	Commission   decimal.Decimal `db:"commission"`
-	StatusId     uint64          `db:"status_id"`
-	Order        uint64          `db:"order_num"`
-	CreatedBy    uint64          `db:"created_by"`
+	StatusId     int             `db:"status_id"`
+	Order        int             `db:"order"`
+	CreatedBy    int             `db:"created_by"`
 	Creator      string          `db:"creator"`
 	CreatedAt    time.Time       `db:"created_at"`
-	UpdatedBy    *uint64         `db:"updated_by"`
+	UpdatedBy    *int            `db:"updated_by"`
 	UpdatedAt    *time.Time      `db:"updated_at"`
-	DeletedBy    *uint64         `db:"deleted_by"`
+	DeletedBy    *int            `db:"deleted_by"`
 	DeletedAt    *time.Time      `db:"deleted_at"`
 }
 
@@ -136,7 +136,7 @@ func (u *UserAddModel) New(usreq UserNewRequest, usctx *types.UserContext, dbtx 
 	}
 	sessionString := uidSession.String()
 
-	byID, err := postgres.GetIdByUuid("users_space", "user_uuid", usctx.UserUuid, dbtx)
+	byID, err := postgres.GetIdByUuid("tbl_users", "user_uuid", usctx.UserUuid, dbtx)
 	if err != nil {
 		return err
 	}
@@ -148,12 +148,12 @@ func (u *UserAddModel) New(usreq UserNewRequest, usctx *types.UserContext, dbtx 
 	}
 	localNow := time.Now().In(location)
 
-	id, errSeq := postgres.GetSeqNextVal("seq_user_id", dbtx)
+	id, errSeq := postgres.GetSeqNextVal("tbl_users_id_seq", dbtx)
 	if errSeq != nil {
 		return errSeq
 	}
 
-	isUsername, err := postgres.IsExists("users_space", "user_name", usreq.UserName, dbtx)
+	isUsername, err := postgres.IsExists("tbl_users", "user_name", usreq.UserName, dbtx)
 	if err != nil {
 		return err
 	}
@@ -237,7 +237,7 @@ type UserUpdateModel struct {
 func (u *UserUpdateModel) New(user_uuid uuid.UUID, usreq UserUpdateRequest, usctx *types.UserContext, dbstream *sqlx.Tx) error {
 	// check permission
 	isYours, err := postgres.IsExistsWhere(
-		"users_space",
+		"tbl_users",
 		"user_uuid = $1 AND user_name = $2",
 		[]interface{}{user_uuid, usctx.UserName},
 		dbstream,
@@ -254,7 +254,7 @@ func (u *UserUpdateModel) New(user_uuid uuid.UUID, usreq UserUpdateRequest, usct
 	}
 
 	//Check if user uuid exits
-	is_useruuid, err_seq := postgres.IsExists("users_space", "user_uuid", user_uuid, dbstream)
+	is_useruuid, err_seq := postgres.IsExists("tbl_users", "user_uuid", user_uuid, dbstream)
 	if err_seq != nil {
 		return err_seq
 	} else {
@@ -264,13 +264,13 @@ func (u *UserUpdateModel) New(user_uuid uuid.UUID, usreq UserUpdateRequest, usct
 	}
 
 	//Get user logined id
-	by_id, err := postgres.GetIdByUuid("users_space", "user_uuid", usctx.UserUuid, dbstream)
+	by_id, err := postgres.GetIdByUuid("tbl_users", "user_uuid", usctx.UserUuid, dbstream)
 	if err != nil {
 		return err
 	}
 
 	//Get user logined id
-	id, err := postgres.GetIdByUuid("users_space", "user_uuid", user_uuid.String(), dbstream)
+	id, err := postgres.GetIdByUuid("tbl_users", "user_uuid", user_uuid.String(), dbstream)
 	if err != nil {
 		return err
 	}
@@ -419,7 +419,7 @@ func (r *UserUpdatePasswordRequest) bind(c *fiber.Ctx, v *utils.Validator) error
 func (u *UserUpdatePasswordModel) New(user_uuid uuid.UUID, usreq UserUpdatePasswordRequest, usctx *types.UserContext, db *sqlx.Tx) error {
 
 	// Check if user_uuid exists
-	is_useruuid, err := postgres.IsExists("users_space", "user_uuid", user_uuid, db)
+	is_useruuid, err := postgres.IsExists("tbl_users", "user_uuid", user_uuid, db)
 	if err != nil {
 		return err
 	}
@@ -428,14 +428,14 @@ func (u *UserUpdatePasswordModel) New(user_uuid uuid.UUID, usreq UserUpdatePassw
 	}
 
 	// Get the ID of the user performing the update
-	by_id, err := postgres.GetIdByUuid("users_space", "user_uuid", usctx.UserUuid, db)
+	by_id, err := postgres.GetIdByUuid("tbl_users", "user_uuid", usctx.UserUuid, db)
 	if err != nil {
 		return err
 	}
 
 	// Fetch the existing password for the target user
 	var oldPassword string
-	query := `SELECT password FROM users_space WHERE user_uuid = $1`
+	query := `SELECT password FROM tbl_users WHERE user_uuid = $1`
 	err = db.Get(&oldPassword, query, user_uuid)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

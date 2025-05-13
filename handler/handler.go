@@ -23,11 +23,11 @@ func NewFrontService(app *fiber.App, db_pool *sqlx.DB, redis *redis.Client) *Fro
 
 	// Authentication
 	auth := auth.NewAuthRoute(app, db_pool, redis).RegisterAuthRoute()
-	user := user.NewUserRoute(app, db_pool).RegisterUserRoute()
 
 	// Middleware
 	middleware.NewJwtMinddleWare(app, db_pool, redis)
 
+	user := user.NewUserRoute(app, db_pool).RegisterUserRoute()
 	return &FrontService{
 		AuthHandler: auth,
 		UserHandler: user,

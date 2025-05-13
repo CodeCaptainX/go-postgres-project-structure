@@ -56,22 +56,22 @@ func (u *UserRepoImpl) GetLoginSession(login_session string) (bool, *responses.E
 
 // Test URL endpoint: {{ _.host }}/api/v1/admin/user?paging_options[page]=1&paging_options[per_page]=10&sorts[0][property]=u.id&sorts[0][direction]=desc&sorts[1][property]=u.user_name&sorts[1][direction]=desc&filters[0][property]=u.status_id&filters[0][value]=1
 func (u *UserRepoImpl) Show(userShowRequest UserShowRequest) (*UserResponse, *responses.ErrorResponse) {
-	var per_page = userShowRequest.PageOptions.Perpage
-	var page = userShowRequest.PageOptions.Page
-	var offset = (page - 1) * per_page
-	var sql_limit = fmt.Sprintf(" LIMIT %d OFFSET %d", per_page, offset)
+	perPage := userShowRequest.PageOptions.Perpage
+	page := userShowRequest.PageOptions.Page
+	offset := (page - 1) * perPage
 
-	// Order By output will be: `ORDER BY u.id asc, u.user_name desc`
-	var sql_orderby = postgres.BuildSQLSort(userShowRequest.Sorts)
+	sqlLimit := fmt.Sprintf(" LIMIT %d OFFSET %d", perPage, offset)
+	sqlOrderBy := postgres.BuildSQLSort(userShowRequest.Sorts)
 
-	// Filters output of BuildSQLFilter() will be e.g. tarantool.NewExecuteRequest("WHERE.. AND u.status_id=$1").Args([1])
-	sql_filters, args_filters := postgres.BuildSQLFilter(userShowRequest.Filters)
+	sqlFilters, argsFilters := postgres.BuildSQLFilter(userShowRequest.Filters)
+	fmt.Println("🚀 ~ file: repository.go ~ line 67 ~ func ~ sqlFilters : ", sqlFilters)
+	whereClause := "WHERE u.deleted_at IS NULL"
 
-	if len(args_filters) > 0 {
-		sql_filters = " AND " + sql_filters
+	if sqlFilters != "" {
+		whereClause += " AND " + sqlFilters
 	}
 
-	// SQL query with parameters
+	// Construct SELECT query
 	query := fmt.Sprintf(`
 		SELECT 
 			u.id, 
@@ -99,43 +99,44 @@ func (u *UserRepoImpl) Show(userShowRequest UserShowRequest) (*UserResponse, *re
 			u.deleted_by, 
 			u.deleted_at
 		FROM 
-			users_space u
+			tbl_users u
 		INNER JOIN 
-			users_roles_space ur 
-		ON  
-			u.role_id = ur.id
+			tbl_users_roles ur ON u.role_id = ur.id
 		LEFT JOIN 
-			users_space creator
-		ON 
-			u.created_by = creator.id
-		WHERE 
-			%s%s%s`, sql_filters, sql_orderby, sql_limit)
+			tbl_users creator ON u.created_by = creator.id
+		%s %s %s`, whereClause, sqlOrderBy, sqlLimit)
 
-	// Count query for pagination
-	countQuery := fmt.Sprintf(`
-		SELECT 
-			COUNT(*) as total
-		FROM 
-			users_space u
-		WHERE %s`, sql_filters)
+	fmt.Println("🚀 SQL Query:", query)
+	fmt.Println("🚀 Args:", argsFilters)
 
 	var users []User
-	err := u.db.Select(&users, query, args_filters...)
+	err := u.db.Select(&users, query, argsFilters...)
 	if err != nil {
 		custom_log.NewCustomLog("user_show_failed", err.Error(), "error")
-		err_msg := &responses.ErrorResponse{}
-		return nil, err_msg.NewErrorResponse("user_show_failed", fmt.Errorf("cannot select user: database error"))
+		errMsg := &responses.ErrorResponse{}
+		return nil, errMsg.NewErrorResponse("user_show_failed", fmt.Errorf("cannot select user: database error"))
 	}
+
+	// Count query for total records
+	countQuery := fmt.Sprintf(`
+		SELECT COUNT(*) as total
+		FROM tbl_users u
+		%s`, whereClause)
+
+	fmt.Println("🚀 Count Query:", countQuery)
 
 	var totalCount int
-	err = u.db.Get(&totalCount, countQuery, args_filters[:len(args_filters)-len(userShowRequest.Filters)]...)
+	err = u.db.Get(&totalCount, countQuery, argsFilters...)
 	if err != nil {
 		custom_log.NewCustomLog("user_show_failed", err.Error(), "error")
-		err_msg := &responses.ErrorResponse{}
-		return nil, err_msg.NewErrorResponse("user_show_failed", fmt.Errorf("cannot get total count: database error"))
+		errMsg := &responses.ErrorResponse{}
+		return nil, errMsg.NewErrorResponse("user_show_failed", fmt.Errorf("cannot get total count: database error"))
 	}
 
-	return &UserResponse{Users: users, Total: totalCount}, nil
+	return &UserResponse{
+		Users: users,
+		Total: totalCount,
+	}, nil
 }
 
 func (u *UserRepoImpl) ShowOne(user_uuid uuid.UUID) (*UserResponse, *responses.ErrorResponse) {
@@ -166,27 +167,27 @@ func (u *UserRepoImpl) ShowOne(user_uuid uuid.UUID) (*UserResponse, *responses.E
 			u.deleted_by, 
 			u.deleted_at
 		FROM 
-			users_space u
+			tbl_users u
 		INNER JOIN 
-			users_roles_space ur 
+			tbl_users_roles ur 
 		ON  
 			u.role_id = ur.id
 		LEFT JOIN 
-			users_space creator
+			tbl_users creator
 		ON 
 			u.created_by = creator.id
 		WHERE 
-			u.deleted_at IS NULL AND u.user_uuid = ?`
+			u.deleted_at IS NULL AND u.user_uuid = $1`
 
-	var users []User
-	err := u.db.Select(&users, query, user_uuid)
+	var users User
+	err := u.db.Get(&users, query, user_uuid)
 	if err != nil {
 		custom_log.NewCustomLog("user_showone_failed", err.Error(), "error")
 		err_msg := &responses.ErrorResponse{}
 		return nil, err_msg.NewErrorResponse("user_showone_failed", fmt.Errorf("cannot select user: database error"))
 	}
 
-	return &UserResponse{Users: users, Total: 0}, nil
+	return &UserResponse{Users: []User{users}, Total: 0}, nil
 }
 
 func (u *UserRepoImpl) Create(usreq UserNewRequest) (*UserResponse, *responses.ErrorResponse) {
@@ -216,12 +217,12 @@ func (u *UserRepoImpl) Create(usreq UserNewRequest) (*UserResponse, *responses.E
 
 	// Insert query
 	query := `
-		INSERT INTO users_space (
+		INSERT INTO tbl_users (
 			id, user_uuid, first_name, last_name, user_name, profile_photo, user_alias, 
 			password, email, role_id, status, login_session, phone_number, commission, 
 			"order", created_by, created_at
 		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
 		)`
 
 	_, err = tx.Exec(query,
@@ -298,7 +299,7 @@ func (u *UserRepoImpl) Update(user_uuid uuid.UUID, usreq UserUpdateRequest) (*Us
 
 	// Update query
 	query := `
-		UPDATE users_space SET
+		UPDATE tbl_users SET
 			first_name = ?, 
 			last_name = ?, 
 			email = ?,
@@ -356,7 +357,7 @@ func (u *UserRepoImpl) Delete(user_uuid uuid.UUID) (*UserDeleteResponse, *respon
 		var exists bool
 		err := u.db.Get(&exists, `
 			SELECT EXISTS(
-				SELECT 1 FROM users_space 
+				SELECT 1 FROM tbl_users 
 				WHERE role_id <= ? AND user_uuid = ? AND deleted_at IS NULL
 			)`, u.userCtx.RoleId, user_uuid)
 
@@ -385,7 +386,7 @@ func (u *UserRepoImpl) Delete(user_uuid uuid.UUID) (*UserDeleteResponse, *respon
 
 	// Get current user ID
 	var by_id int64
-	err = u.db.Get(&by_id, "SELECT id FROM users_space WHERE user_uuid = ?", u.userCtx.UserUuid)
+	err = u.db.Get(&by_id, "SELECT id FROM tbl_users WHERE user_uuid = ?", u.userCtx.UserUuid)
 	if err != nil {
 		custom_log.NewCustomLog("user_delete_failed", err.Error())
 		err_resp := &responses.ErrorResponse{}
@@ -420,7 +421,7 @@ func (u *UserRepoImpl) Delete(user_uuid uuid.UUID) (*UserDeleteResponse, *respon
 
 	// Soft delete user
 	_, err = tx.Exec(`
-		UPDATE users_space SET
+		UPDATE tbl_users SET
 			status_id = ?, 
 			deleted_by = ?, 
 			deleted_at = ?, 
@@ -437,7 +438,7 @@ func (u *UserRepoImpl) Delete(user_uuid uuid.UUID) (*UserDeleteResponse, *respon
 
 	// Update login session
 	login_session, _ := uuid.NewV7()
-	_, err = tx.Exec("UPDATE users_space SET login_session = ? WHERE user_uuid = ?",
+	_, err = tx.Exec("UPDATE tbl_users SET login_session = ? WHERE user_uuid = ?",
 		login_session.String(), user_uuid)
 	if err != nil {
 		log.Println("Error updating session:", err.Error())
@@ -522,7 +523,7 @@ func (u *UserRepoImpl) GetUserFormUpdate(user_uuid uuid.UUID) (*UserFormUpdateRe
 		var exists bool
 		err := u.db.Get(&exists, `
 			SELECT EXISTS(
-				SELECT 1 FROM users_space 
+				SELECT 1 FROM tbl_users 
 				WHERE role_id <= ? AND user_uuid = ? AND deleted_at IS NULL
 			)`, u.userCtx.RoleId, user_uuid)
 
@@ -567,7 +568,7 @@ func (u *UserRepoImpl) GetUserFormUpdate(user_uuid uuid.UUID) (*UserFormUpdateRe
 			Email:       users.Users[0].Email,
 			RoleId:      users.Users[0].RoleId,
 			PhoneNumber: *users.Users[0].PhoneNumber,
-			StatusId:    users.Users[0].StatusId,
+			StatusId:    uint64(users.Users[0].StatusId),
 			Commission:  users.Users[0].Commission,
 			Status:      *status,
 			Roles:       *roles,
@@ -603,7 +604,7 @@ func (u *UserRepoImpl) Update_Password(user_uuid uuid.UUID, usreq UserUpdatePass
 
 	// Get current user ID
 	var by_id int64
-	err = u.db.Get(&by_id, "SELECT id FROM users_space WHERE user_uuid = ?", u.userCtx.UserUuid)
+	err = u.db.Get(&by_id, "SELECT id FROM tbl_users WHERE user_uuid = ?", u.userCtx.UserUuid)
 	if err != nil {
 		custom_log.NewCustomLog("user_update_password_failed", err.Error())
 		err_resp := &responses.ErrorResponse{}
@@ -624,7 +625,7 @@ func (u *UserRepoImpl) Update_Password(user_uuid uuid.UUID, usreq UserUpdatePass
 
 	// Update password
 	_, err = tx.Exec(`
-		UPDATE users_space SET
+		UPDATE tbl_users SET
 			password = ?, 
 			updated_by = ?, 
 			updated_at = ?
@@ -682,7 +683,7 @@ func (u *UserRepoImpl) GetUserBasicInfo(username string) (*UserBasicInfoResponse
 			u.id, u.user_uuid, u.first_name, u.last_name, u.user_name, u.email, 
 			u.role_id, ur.user_role_name AS role_name, u.status, u.login_session, u.profile_photo, 
 			u.user_alias, u.phone_number, u.user_avatar_id, u.commission, u.status_id
-		FROM users_space u
+		FROM tbl_users u
 		INNER JOIN users_roles_space ur ON u.role_id = ur.id
 		WHERE u.deleted_at IS NULL AND ur.deleted_at IS NULL
 		AND u.user_name = $1
