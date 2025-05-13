@@ -6,7 +6,7 @@ import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
-func Translate(c *fiber.Ctx, param *string, MessageID string) string {
+func Translate(MessageID string, param *string, c *fiber.Ctx) string {
 	var translate string
 	var err error
 	if param != nil {

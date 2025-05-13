@@ -4,6 +4,7 @@ import (
 	custom_validator "snack-shop/pkg/validator"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 // AuthLoginRequest represents the login request payload
@@ -33,10 +34,11 @@ type AuthResponse struct {
 }
 
 type MemberData struct {
-	ID       int    `db:"id"`
-	Username string `db:"user_name"`
-	Email    string `db:"email"`
-	Password string `db:"password"`
+	ID       int       `db:"id"`
+	Username string    `db:"user_name"`
+	UserUuid uuid.UUID `db:"user_uuid"`
+	Email    string    `db:"email"`
+	Password string    `db:"password"`
 }
 
 type RedisSession struct {

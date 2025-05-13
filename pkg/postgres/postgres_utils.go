@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 
-	types "snack-shop/pkg/share"
+	types "snack-shop/pkg/model"
 )
 
 // CountRow counts the number of rows returned by a query
@@ -161,7 +161,7 @@ func BuildSQLFilter(req []types.Filter) (string, []interface{}) {
 }
 
 // GetIdByUuid returns the ID for a given UUID
-func GetIdByUuid(db *sqlx.DB, space_name string, uuid_field_name string, uuid_str string) (*int, error) {
+func GetIdByUuid(space_name string, uuid_field_name string, uuid_str string, db *sqlx.Tx) (*int, error) {
 	var id int
 
 	// Parse the UUID
@@ -183,23 +183,26 @@ func GetIdByUuid(db *sqlx.DB, space_name string, uuid_field_name string, uuid_st
 }
 
 // GetSeqNextVal returns the next value from a sequence
-func GetSeqNextVal(db *sqlx.DB, seq_name string) (*int, error) {
-	var id int
+// SeqResult struct to store sequence result
+type SeqResult struct {
+	ID int `db:"id"`
+}
 
-	// Define the SQL query - adjust this to your PostgreSQL sequence syntax
-	sql := fmt.Sprintf(`SELECT nextval('%s') as id`, seq_name)
+// Supports both normal DB connection and transactions
+func GetSeqNextVal(seqName string, exec sqlx.Ext) (*int, error) {
+	var result SeqResult
+	sql := `SELECT nextval($1) AS id`
 
-	// Execute the query
-	err := db.Get(&id, sql)
+	// Execute query using either DB or transaction
+	err := sqlx.Get(exec, &result, sql, seqName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get sequence value: %w", err)
 	}
-
-	return &id, nil
+	return &result.ID, nil
 }
 
 // SetSeqNextVal sets and returns the next sequence value
-func SetSeqNextVal(db *sqlx.DB, seq_name string) (*int, error) {
+func SetSeqNextVal(seq_name string, db *sqlx.Tx) (*int, error) {
 	var id int
 
 	// Define the SQL query - adjust to PostgreSQL sequence operations
@@ -215,7 +218,7 @@ func SetSeqNextVal(db *sqlx.DB, seq_name string) (*int, error) {
 }
 
 // IsExists checks if a record exists with the given field value
-func IsExists(db *sqlx.DB, space_name string, field_name string, value interface{}) (bool, error) {
+func IsExists(space_name string, field_name string, value interface{}, db *sqlx.Tx) (bool, error) {
 	var exists bool
 
 	// Define the SQL query
@@ -231,7 +234,7 @@ func IsExists(db *sqlx.DB, space_name string, field_name string, value interface
 }
 
 // IsExistsWhere checks if a record exists with custom WHERE conditions
-func IsExistsWhere(db *sqlx.DB, space_name string, where_sqlstr string, args []interface{}) (bool, error) {
+func IsExistsWhere(space_name string, where_sqlstr string, args []interface{}, db *sqlx.Tx) (bool, error) {
 	var exists bool
 
 	// Define the SQL query

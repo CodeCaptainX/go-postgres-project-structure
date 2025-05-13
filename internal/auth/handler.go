@@ -2,6 +2,7 @@ package auth
 
 import (
 	constants "snack-shop/pkg/constants"
+	response "snack-shop/pkg/http/response"
 	utils "snack-shop/pkg/utils"
 	custom_validator "snack-shop/pkg/validator"
 
@@ -28,9 +29,9 @@ func (a *AuthHandler) Login(c *fiber.Ctx) error {
 	req := &AuthLoginRequest{}
 
 	if err := req.bind(c, v); err != nil {
-		msg := utils.Translate(c, nil, "login_invalid")
+		msg := utils.Translate("login_invalid", nil, c)
 		return c.Status(fiber.StatusUnprocessableEntity).JSON(
-			utils.NewResponseError(
+			response.NewResponseError(
 				msg,
 				constants.Login_invalid,
 				err,
@@ -41,17 +42,17 @@ func (a *AuthHandler) Login(c *fiber.Ctx) error {
 	success, err := a.authService.Login(req.Auth.Username, req.Auth.Password)
 
 	if err != nil {
-		msg := utils.Translate(c, nil, err.MessageID)
-		return c.Status(fiber.StatusUnauthorized).JSON(utils.NewResponseError(
+		msg := utils.Translate(err.MessageID, nil, c)
+		return c.Status(fiber.StatusUnauthorized).JSON(response.NewResponseError(
 			msg,
 			constants.LoginFailed,
 			err.Err,
 		))
 	}
 
-	msg := utils.Translate(c, nil, "login_success")
+	msg := utils.Translate("login_success", nil, c)
 
-	return c.Status(fiber.StatusOK).JSON(utils.NewResponse(
+	return c.Status(fiber.StatusOK).JSON(response.NewResponse(
 		msg,
 		constants.Login_success,
 		success,

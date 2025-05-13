@@ -10,7 +10,8 @@ import (
 
 	"snack-shop/pkg/custom_log"
 	redis_util "snack-shop/pkg/redis"
-	utils "snack-shop/pkg/utils"
+	"snack-shop/pkg/responses"
+	util "snack-shop/pkg/utils"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -20,8 +21,8 @@ import (
 )
 
 type AuthRepository interface {
-	Login(username, password string) (*AuthResponse, *utils.ErrorResponse)
-	CheckSession(loginSession string, userID float64) (bool, *utils.ErrorResponse)
+	Login(username, password string) (*AuthResponse, *responses.ErrorResponse)
+	CheckSession(loginSession string, userID float64) (bool, *responses.ErrorResponse)
 }
 
 type authRepositoryImpl struct {
@@ -36,14 +37,15 @@ func NewAuthRepository(dbPool *sqlx.DB, redisClient *redis.Client) AuthRepositor
 	}
 }
 
-func (a *authRepositoryImpl) Login(username, password string) (*AuthResponse, *utils.ErrorResponse) {
+func (a *authRepositoryImpl) Login(username, password string) (*AuthResponse, *responses.ErrorResponse) {
 	var member MemberData
-	msg := utils.ErrorResponse{}
+	msg := responses.ErrorResponse{}
 
 	query := `
 		SELECT
 			id, 
 			user_name,
+			user_uuid,
 			email,
 			password
 		FROM tbl_users 
@@ -58,7 +60,7 @@ func (a *authRepositoryImpl) Login(username, password string) (*AuthResponse, *u
 
 	var res AuthResponse
 
-	hours := utils.GetenvInt("JWT_EXP_HOUR", 7)
+	hours := util.GetenvInt("JWT_EXP_HOUR", 7)
 	expirationTime := time.Now().Add(time.Duration(hours) * time.Hour)
 	loginSession, err := uuid.NewV7()
 
@@ -68,7 +70,8 @@ func (a *authRepositoryImpl) Login(username, password string) (*AuthResponse, *u
 	}
 
 	claims := jwt.MapClaims{
-		"player_id":     member.ID,
+		"user_uuid":     member.UserUuid,
+		"user_id":       member.ID,
 		"username":      member.Username,
 		"login_session": loginSession.String(),
 		"exp":           expirationTime.Unix(),
@@ -114,8 +117,8 @@ func (a *authRepositoryImpl) Login(username, password string) (*AuthResponse, *u
 	return &res, nil
 }
 
-func (a *authRepositoryImpl) CheckSession(loginSession string, memberID float64) (bool, *utils.ErrorResponse) {
-	msg := utils.ErrorResponse{}
+func (a *authRepositoryImpl) CheckSession(loginSession string, memberID float64) (bool, *responses.ErrorResponse) {
+	msg := responses.ErrorResponse{}
 
 	key := fmt.Sprintf("member: %d", int(memberID))
 	redisUtil := redis_util.NewRedisUtil(a.redis)

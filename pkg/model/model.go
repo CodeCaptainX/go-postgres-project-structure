@@ -1,6 +1,22 @@
-package custom_models
+package share
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+
+	"github.com/google/uuid"
+)
+
+type UserContext struct {
+	UserID       float64
+	UserUuid     string
+	UserName     string
+	RoleId       uint64
+	LoginSession string
+	Exp          time.Time
+	UserAgent    string
+	Ip           string
+}
 
 type PlayerContext struct {
 	PlayerID     float64   `json:"player_id"`
@@ -12,22 +28,53 @@ type PlayerContext struct {
 	MembershipId float64   `json:"membership_id"`
 	RoleID       int       `json:"role_id"`
 }
-type Token struct {
-	Id       float64 `json:"id"`
-	Username string  `json:"user_name"`
+type Paging struct {
+	Page    int `json:"page" query:"page" validate:"required,min=1"`
+	Perpage int `json:"per_page" query:"per_page" validate:"required,min=1"`
 }
-
-type PagingOption struct {
-	PerPage int `json:"perpage" query:"per_page" validate:"required"`
-	Page    int `json:"page" query:"page" validate:"required"`
-}
-
-type Filter struct {
-	Property string      `json:"property" query:"property"`
-	Value    interface{} `json:"value" query:"value"`
-}
-
 type Sort struct {
-	Property  string `json:"property" query:"property"`
-	Direction string `json:"direction" query:"direction"`
+	Property  string `json:"property" validate:"required"`
+	Direction string `json:"direction" validate:"required,oneof=asc desc"`
+}
+type Filter struct {
+	Property string      `json:"property" validate:"required"`
+	Value    interface{} `json:"value" validate:"required"`
+}
+
+type FieldId struct {
+	Id uint64 `json:"id"`
+}
+
+type FieldFunctionIds struct {
+	FunctionIDs string `json:"function_ids"`
+}
+
+type Status struct {
+	Id         int    `json:"id"`
+	StatusName string `json:"status_name"`
+}
+
+type BroadcastResponse struct {
+	Topic string          `json:"topic"`
+	Data  json.RawMessage `json:"data"`
+}
+
+var StatusData = []Status{
+	{Id: 1, StatusName: "Active"},
+	{Id: 2, StatusName: "Inactive"},
+	{Id: 3, StatusName: "Suspended"},
+	{Id: 4, StatusName: "Deleted"},
+}
+
+// Platform Mini
+type Platform struct {
+	ID                     uint64    `json:"id"`
+	MembershipPlatformUUID uuid.UUID `json:"membership_platform_uuid"`
+	PlatformName           string    `json:"platform_name"`
+	PlatformHost           string    `json:"platform_host"`
+	PlatformToken          string    `json:"platform_token"`
+	PlatformExtraPayload   string    `json:"platform_extra_payload"`
+	InternalToken          string    `json:"internal_token"`
+	StatusID               uint64    `json:"status_id"`
+	Order                  uint64    `json:"order"`
 }

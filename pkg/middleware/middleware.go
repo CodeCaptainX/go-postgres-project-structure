@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+
 	"log"
 	"net/http"
 	"os"
@@ -9,8 +10,9 @@ import (
 	"time"
 
 	auth "snack-shop/internal/auth"
-	custom_models "snack-shop/pkg/model"
-	custom_translate "snack-shop/pkg/utils"
+	response "snack-shop/pkg/http/response"
+	types "snack-shop/pkg/model"
+	utils "snack-shop/pkg/utils"
 
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
@@ -76,37 +78,81 @@ func NewJwtMinddleWare(app *fiber.App, db_pool *sqlx.DB, redis *redis.Client) {
 }
 
 func handleUserContext(c *fiber.Ctx, uclaim jwt.MapClaims, db *sqlx.DB, redis *redis.Client) error {
-
-	login_session, ok := uclaim["login_session"].(string)
-	if !ok || login_session == "" {
-		smg_error := custom_translate.NewResponseError(
-			custom_translate.Translate(c, nil, "login_session_missing"),
+	// Verify login_session claim
+	loginSession, ok := uclaim["login_session"].(string)
+	if !ok || loginSession == "" {
+		errMsg := utils.Translate("login_session_missing", nil, c)
+		return c.Status(http.StatusUnprocessableEntity).JSON(response.NewResponseError(
+			errMsg,
 			-500,
-			fmt.Errorf("%s", custom_translate.Translate(c, nil, "login_session_missing")),
-		)
-		return c.Status(http.StatusUnprocessableEntity).JSON(smg_error)
+			fmt.Errorf("missing or invalid 'login_session' in claims"),
+		))
 	}
 
-	uCtx := custom_models.PlayerContext{
-		PlayerID:     uclaim["player_id"].(float64),
-		UserName:     uclaim["username"].(string),
-		LoginSession: uclaim["login_session"].(string),
-		Exp:          time.Unix(int64(uclaim["exp"].(float64)), 0),
+	// Verify player_id claim
+	userID, ok := uclaim["user_id"].(float64)
+	if !ok {
+		errMsg := utils.Translate("player_id_missing", nil, c)
+		return c.Status(http.StatusUnprocessableEntity).JSON(response.NewResponseError(
+			errMsg,
+			-500,
+			fmt.Errorf("missing or invalid 'player_id' in claims"),
+		))
+	}
+
+	uuid, ok := uclaim["user_uuid"].(string)
+	if !ok {
+		return c.Status(http.StatusUnprocessableEntity).JSON(response.NewResponseError(
+			"Invalid or missing 'user_uuid' in claims", -500, fmt.Errorf("missing or invalid 'user_uuid'"),
+		))
+	}
+
+	// Verify username claim
+	username, ok := uclaim["username"].(string)
+	if !ok || username == "" {
+		errMsg := utils.Translate("username_missing", nil, c)
+		return c.Status(http.StatusUnprocessableEntity).JSON(response.NewResponseError(
+			errMsg,
+			-500,
+			fmt.Errorf("missing or invalid 'username' in claims"),
+		))
+	}
+
+	// Verify exp (expiration time) claim
+	exp, ok := uclaim["exp"].(float64)
+	if !ok {
+		errMsg := utils.Translate("exp_missing", nil, c)
+		return c.Status(http.StatusUnprocessableEntity).JSON(response.NewResponseError(
+			errMsg,
+			-500,
+			fmt.Errorf("missing or invalid 'exp' in claims"),
+		))
+	}
+
+	// Create PlayerContext struct for storing session details
+	uCtx := types.UserContext{
+		UserID:       userID,
+		UserUuid:     uuid,
+		UserName:     username,
+		LoginSession: loginSession,
+		Exp:          time.Unix(int64(exp), 0),
 		UserAgent:    c.Get("User-Agent", "unknown"),
 		Ip:           c.IP(),
 	}
-	c.Locals("PlayerContext", uCtx)
+	c.Locals("UserContext", uCtx)
 
+	// Validate session with Redis and database
 	sv := auth.NewAuthService(db, redis)
-	success, err := sv.CheckSession(login_session, uCtx.PlayerID)
+	success, err := sv.CheckSession(loginSession, uCtx.UserID)
 	if err != nil || !success {
-		smg_error := custom_translate.NewResponseError(
-			custom_translate.Translate(c, nil, "login_session_invalid"),
+		errMsg := utils.Translate("login_session_invalid", nil, c)
+		return c.Status(http.StatusUnprocessableEntity).JSON(response.NewResponseError(
+			errMsg,
 			-500,
-			fmt.Errorf("%s", custom_translate.Translate(c, nil, "login_session_invalid")),
-		)
-		return c.Status(http.StatusUnprocessableEntity).JSON(smg_error)
+			fmt.Errorf("invalid session or unable to verify session"),
+		))
 	}
 
+	// Proceed with next handler if the session is valid
 	return c.Next()
 }
