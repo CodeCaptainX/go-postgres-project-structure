@@ -8,6 +8,7 @@
 *.out
 
 /tmp/.air.toml
+/tmp
 
 # Output of the go coverage tool
 *.coverprofile
