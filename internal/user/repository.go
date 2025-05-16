@@ -179,6 +179,7 @@ func (u *UserRepoImpl) ShowOne(user_uuid uuid.UUID) (*UserResponse, *responses.E
 		WHERE 
 			u.deleted_at IS NULL AND u.user_uuid = $1`
 
+	fmt.Println("🚀 ~ file: repository.go ~ line 195 ~ func ~ hello : ")
 	var users User
 	err := u.db.Get(&users, query, user_uuid)
 	if err != nil {
@@ -206,6 +207,22 @@ func (u *UserRepoImpl) Create(usreq UserNewRequest) (*UserResponse, *responses.E
 			tx.Rollback()
 		}
 	}()
+
+	// 	tx, err := u.db_pool.Beginx()
+	// if err != nil {
+	// 	logs.NewCustomLog("transaction_start_failed", err.Error(), "error")
+	// 	return nil, &error_responses.ErrorResponse{
+	// 		MessageID: "transaction_start_failed",
+	// 		Err:       err,
+	// 	}
+	// }
+	// defer func() {
+	// 	if err != nil {
+	// 		tx.Rollback()
+	// 		return
+	// 	}
+	// 	tx.Commit()
+	// }()
 
 	// Initialize user model - modify the New function to accept sqlx.Tx instead of Tarantool stream
 	err = userAddModel.New(usreq, u.userCtx, tx)
@@ -297,19 +314,19 @@ func (u *UserRepoImpl) Update(user_uuid uuid.UUID, usreq UserUpdateRequest) (*Us
 		return nil, err_resp.NewErrorResponse("user_update_failed", err)
 	}
 
-	// Update query
+	// Update query - Using $1, $2, etc. for PostgreSQL
 	query := `
 		UPDATE tbl_users SET
-			first_name = ?, 
-			last_name = ?, 
-			email = ?,
-			role_id = ?, 
-			status_id = ?, 
-			phone_number = ?, 
-			commission = ?, 
-			updated_by = ?, 
-			updated_at = ?
-		WHERE user_uuid = ?`
+			first_name = $1, 
+			last_name = $2, 
+			email = $3,
+			role_id = $4, 
+			status_id = $5, 
+			phone_number = $6, 
+			commission = $7, 
+			updated_by = $8, 
+			updated_at = $9
+		WHERE user_uuid = $10`
 
 	_, err = tx.Exec(query,
 		userUpdateModel.FirstName,
@@ -350,29 +367,28 @@ func (u *UserRepoImpl) Update(user_uuid uuid.UUID, usreq UserUpdateRequest) (*Us
 
 	return u.ShowOne(userUpdateModel.UserUUID)
 }
-
 func (u *UserRepoImpl) Delete(user_uuid uuid.UUID) (*UserDeleteResponse, *responses.ErrorResponse) {
 	// Check permission (admin can't delete users with equal or higher roles)
-	if u.userCtx.RoleId != 1 {
-		var exists bool
-		err := u.db.Get(&exists, `
-			SELECT EXISTS(
-				SELECT 1 FROM tbl_users 
-				WHERE role_id <= ? AND user_uuid = ? AND deleted_at IS NULL
-			)`, u.userCtx.RoleId, user_uuid)
+	// if u.userCtx.RoleId != 1 {
+	// 	var exists bool
+	// 	err := u.db.Get(&exists, `
+	// 		SELECT EXISTS(
+	// 			SELECT 1 FROM tbl_users
+	// 			WHERE role_id <= $1 AND user_uuid = $2 AND deleted_at IS NULL
+	// 		)`, u.userCtx.RoleId, user_uuid)
 
-		if err != nil {
-			custom_log.NewCustomLog("user_delete_failed", err.Error(), "error")
-			err_resp := &responses.ErrorResponse{}
-			return nil, err_resp.NewErrorResponse("user_delete_failed", fmt.Errorf("failed to check permissions"))
-		}
+	// 	if err != nil {
+	// 		custom_log.NewCustomLog("user_delete_failed", err.Error(), "error")
+	// 		err_resp := &responses.ErrorResponse{}
+	// 		return nil, err_resp.NewErrorResponse("user_delete_failed", fmt.Errorf("failed to check permissions"))
+	// 	}
 
-		if exists {
-			custom_log.NewCustomLog("user_delete_failed", "permission denied", "error")
-			err_resp := &responses.ErrorResponse{}
-			return nil, err_resp.NewErrorResponse("user_delete_failed", fmt.Errorf("permission denied: this user has the same or higher role than you"))
-		}
-	}
+	// 	if exists {
+	// 		custom_log.NewCustomLog("user_delete_failed", "permission denied", "error")
+	// 		err_resp := &responses.ErrorResponse{}
+	// 		return nil, err_resp.NewErrorResponse("user_delete_failed", fmt.Errorf("permission denied: this user has the same or higher role than you"))
+	// 	}
+	// }
 
 	// Get timestamp for soft delete
 	app_timezone := os.Getenv("APP_TIMEZONE")
@@ -386,7 +402,8 @@ func (u *UserRepoImpl) Delete(user_uuid uuid.UUID) (*UserDeleteResponse, *respon
 
 	// Get current user ID
 	var by_id int64
-	err = u.db.Get(&by_id, "SELECT id FROM tbl_users WHERE user_uuid = ?", u.userCtx.UserUuid)
+	err = u.db.Get(&by_id, "SELECT id FROM tbl_users WHERE user_uuid = $1", u.userCtx.UserUuid)
+	fmt.Println("🚀 ~ file: repository.go ~ line 406 ~ func ~ u.userCtx.UserUuid : ", u.userCtx.UserUuid)
 	if err != nil {
 		custom_log.NewCustomLog("user_delete_failed", err.Error())
 		err_resp := &responses.ErrorResponse{}
@@ -422,12 +439,12 @@ func (u *UserRepoImpl) Delete(user_uuid uuid.UUID) (*UserDeleteResponse, *respon
 	// Soft delete user
 	_, err = tx.Exec(`
 		UPDATE tbl_users SET
-			status_id = ?, 
-			deleted_by = ?, 
-			deleted_at = ?, 
-			updated_by = ?, 
-			updated_at = ?
-		WHERE user_uuid = ?`,
+			status_id = $1, 
+			deleted_by = $2, 
+			deleted_at = $3, 
+			updated_by = $4, 
+			updated_at = $5
+		WHERE user_uuid = $6`,
 		0, by_id, now, by_id, now, user_uuid)
 
 	if err != nil {
@@ -438,7 +455,7 @@ func (u *UserRepoImpl) Delete(user_uuid uuid.UUID) (*UserDeleteResponse, *respon
 
 	// Update login session
 	login_session, _ := uuid.NewV7()
-	_, err = tx.Exec("UPDATE tbl_users SET login_session = ? WHERE user_uuid = ?",
+	_, err = tx.Exec("UPDATE tbl_users SET login_session = $1 WHERE user_uuid = $2",
 		login_session.String(), user_uuid)
 	if err != nil {
 		log.Println("Error updating session:", err.Error())
@@ -471,13 +488,13 @@ func (u *UserRepoImpl) GetStatus() *[]types.Status {
 }
 
 func (u *UserRepoImpl) GetRoles() (*[]Role, error) {
-	query := "SELECT id, user_role_name FROM users_roles_space WHERE deleted_at IS NULL"
+	query := "SELECT id, user_role_name FROM tbl_users_roles WHERE deleted_at IS NULL"
 	var args []interface{}
 
 	if u.userCtx.RoleId == 1 {
-		query += " AND id >= ?"
+		query += " AND id >= $1"
 	} else {
-		query += " AND id > ?"
+		query += " AND id > $1"
 	}
 	query += " ORDER BY user_role_name ASC"
 	args = append(args, u.userCtx.RoleId)
@@ -524,7 +541,7 @@ func (u *UserRepoImpl) GetUserFormUpdate(user_uuid uuid.UUID) (*UserFormUpdateRe
 		err := u.db.Get(&exists, `
 			SELECT EXISTS(
 				SELECT 1 FROM tbl_users 
-				WHERE role_id <= ? AND user_uuid = ? AND deleted_at IS NULL
+				WHERE role_id <= $1 AND user_uuid = $2 AND deleted_at IS NULL
 			)`, u.userCtx.RoleId, user_uuid)
 
 		if err != nil {
@@ -604,7 +621,7 @@ func (u *UserRepoImpl) Update_Password(user_uuid uuid.UUID, usreq UserUpdatePass
 
 	// Get current user ID
 	var by_id int64
-	err = u.db.Get(&by_id, "SELECT id FROM tbl_users WHERE user_uuid = ?", u.userCtx.UserUuid)
+	err = u.db.Get(&by_id, "SELECT id FROM tbl_users WHERE user_uuid = $1", u.userCtx.UserUuid)
 	if err != nil {
 		custom_log.NewCustomLog("user_update_password_failed", err.Error())
 		err_resp := &responses.ErrorResponse{}
@@ -626,10 +643,10 @@ func (u *UserRepoImpl) Update_Password(user_uuid uuid.UUID, usreq UserUpdatePass
 	// Update password
 	_, err = tx.Exec(`
 		UPDATE tbl_users SET
-			password = ?, 
-			updated_by = ?, 
-			updated_at = ?
-		WHERE user_uuid = ?`,
+			password = $1, 
+			updated_by = $2, 
+			updated_at = $3
+		WHERE user_uuid = $4`,
 		RequestChangePassword.Password,
 		RequestChangePassword.UpdatedBy,
 		RequestChangePassword.UpdatedAt,

@@ -339,8 +339,8 @@ type UserDeleteResponse struct {
 	Success bool `json:"success"`
 }
 type Role struct {
-	Id           uint64 `json:"id"`
-	UserRoleName string `json:"user_role_name"`
+	Id           uint64 `json:"id" db:"id"`
+	UserRoleName string `json:"user_role_name" db:"user_role_name"`
 }
 
 type UserCreateForm struct {
