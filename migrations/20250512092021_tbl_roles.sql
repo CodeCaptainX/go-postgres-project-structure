@@ -1,5 +1,5 @@
 -- +goose Up
-CREATE TABLE tbl_users_roles (
+CREATE TABLE tbl_roles (
     id SERIAL PRIMARY KEY,
     user_role_uuid UUID NOT NULL UNIQUE,
     user_role_name VARCHAR NOT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE tbl_users_roles (
 );
 
 -- +goose StatementBegin
-INSERT INTO tbl_users_roles (
+INSERT INTO tbl_roles (
     user_role_uuid, user_role_name, user_role_desc, status, "order", created_by, created_at
 ) VALUES
     ('9a6f17b3-f2d1-4df4-8ade-d1c8fbebdb97', 'admin', 'Role Admin', true, 1, 1, NOW()),
@@ -24,4 +24,4 @@ INSERT INTO tbl_users_roles (
 -- +goose StatementEnd
 
 -- +goose Down
-DROP TABLE IF EXISTS tbl_users_roles;
+DROP TABLE IF EXISTS tbl_roles;

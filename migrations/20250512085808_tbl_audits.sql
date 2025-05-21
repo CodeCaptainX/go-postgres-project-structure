@@ -1,6 +1,6 @@
 -- +goose Up
 -- USERS AUDIT TABLE
-CREATE TABLE tbl_users_audits (
+CREATE TABLE tbl_audits (
     id SERIAL PRIMARY KEY,
     user_audit_uuid UUID NOT NULL UNIQUE,
     user_id INTEGER NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE tbl_users_audits (
     deleted_at TIMESTAMP
 );
 -- +goose StatementBegin
-INSERT INTO tbl_users_audits  (
+INSERT INTO tbl_audits  (
     user_audit_uuid, user_id, user_audit_context, user_audit_desc,
     audit_type_id, user_agent, operator, ip, status_id,
     "order", created_by, created_at, updated_by, updated_at, deleted_by, deleted_at
@@ -40,4 +40,4 @@ INSERT INTO tbl_users_audits  (
 -- +goose StatementEnd
 
 -- +goose Down
-DROP TABLE IF EXISTS tbl_users_audits;
+DROP TABLE IF EXISTS tbl_audits;
