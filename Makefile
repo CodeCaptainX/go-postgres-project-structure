@@ -3,7 +3,7 @@
 export DATABASE_URL=$(shell grep ^DATABASE_URL= .env | cut -d '=' -f2- | tr -d '"')
 
 # Path to migrations folder
-MIGRATIONS_PATH := migrations
+MIGRATIONS_PATH := ./config/database/migrations
 
 # Target to run all migrations
 db:
