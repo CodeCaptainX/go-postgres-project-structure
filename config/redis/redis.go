@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 	config "snack-shop/config"
-	custom_log "snack-shop/pkg/custom_log"
+	custom_log "snack-shop/pkg/logs"
 	"sync"
 
 	"github.com/redis/go-redis/v9"

@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	custom_log "snack-shop/pkg/custom_log"
+	custom_log "snack-shop/pkg/logs"
 	sql "snack-shop/pkg/postgres"
 
 	"github.com/jmoiron/sqlx"

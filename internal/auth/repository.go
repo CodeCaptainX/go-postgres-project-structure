@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"snack-shop/pkg/custom_log"
+	custom_log "snack-shop/pkg/logs"
 	redis_util "snack-shop/pkg/redis"
 	"snack-shop/pkg/responses"
 	util "snack-shop/pkg/utils"
