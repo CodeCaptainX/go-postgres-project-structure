@@ -6,5 +6,6 @@
     "session_update_failed": "Failed to update session.",
     "jwt_failed": "JWT processing failed.",
     "invalid_session_id": "Invalid session ID.",
-    "login_session_invalid": "Login session is invalid."
+    "login_session_invalid": "Login session is invalid.",
+    "role_id_missing": "role id is invalid."
 }

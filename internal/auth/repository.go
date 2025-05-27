@@ -46,6 +46,7 @@ func (a *authRepositoryImpl) Login(username, password string) (*AuthResponse, *r
 			id, 
 			user_name,
 			user_uuid,
+			role_id,
 			email,
 			password
 		FROM tbl_users 
@@ -73,6 +74,7 @@ func (a *authRepositoryImpl) Login(username, password string) (*AuthResponse, *r
 		"user_uuid":     member.UserUuid,
 		"user_id":       member.ID,
 		"username":      member.Username,
+		"role_id":       member.RoleId,
 		"login_session": loginSession.String(),
 		"exp":           expirationTime.Unix(),
 	}

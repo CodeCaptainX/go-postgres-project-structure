@@ -6,5 +6,6 @@
     "session_update_failed": "បរាជ័យក្នុងការធ្វើបច្ចុប្បន្នភាពសម័យ។",
     "jwt_failed": "បរាជ័យក្នុងការប្រើប្រាស់ JWT។",
     "invalid_session_id": "លេខសម្គាល់សម័យមិនត្រឹមត្រូវ។",
-    "login_session_invalid": "សម័យចូលមិនត្រឹមត្រូវ។"
+    "login_session_invalid": "សម័យចូលមិនត្រឹមត្រូវ។",
+    "role_id_missing": "role id មិនមានក្នុង token."
 }

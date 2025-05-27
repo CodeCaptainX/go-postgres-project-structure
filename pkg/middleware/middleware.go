@@ -177,6 +177,15 @@ func handleUserContext(c *fiber.Ctx, uclaim jwt.MapClaims, db *sqlx.DB, redis *r
 			fmt.Errorf("missing or invalid 'username' in claims"),
 		))
 	}
+	role_id, ok := uclaim["role_id"].(float64)
+	if !ok {
+		errMsg := utils.Translate("role_id_missing", nil, c)
+		return c.Status(http.StatusUnprocessableEntity).JSON(response.NewResponseError(
+			errMsg,
+			-500,
+			fmt.Errorf("missing or invalid 'player_id' in claims"),
+		))
+	}
 
 	// Verify exp (expiration time) claim
 	exp, ok := uclaim["exp"].(float64)
@@ -194,6 +203,7 @@ func handleUserContext(c *fiber.Ctx, uclaim jwt.MapClaims, db *sqlx.DB, redis *r
 		UserID:       userID,
 		UserUuid:     uuid,
 		UserName:     username,
+		RoleId:       uint64(role_id),
 		LoginSession: loginSession,
 		Exp:          time.Unix(int64(exp), 0),
 		UserAgent:    c.Get("User-Agent", "unknown"),

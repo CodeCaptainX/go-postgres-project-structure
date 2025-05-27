@@ -325,3 +325,21 @@ func IsExistsWhere(space_name string, where_sqlstr string, args []interface{}, d
 
 	return exists, nil
 }
+
+func BuildPaging(page int, perPage int) string {
+	// var params []interface{}
+
+	if page < 1 {
+		page = 1
+	}
+	if perPage < 1 {
+		perPage = 10
+	}
+
+	offset := (page - 1) * perPage
+	limit := perPage
+
+	// params = append(params, offset, limit)
+
+	return fmt.Sprintf("LIMIT %d OFFSET %d", limit, offset)
+}

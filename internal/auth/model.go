@@ -37,6 +37,7 @@ type MemberData struct {
 	ID       int       `db:"id"`
 	Username string    `db:"user_name"`
 	UserUuid uuid.UUID `db:"user_uuid"`
+	RoleId   int       `db:"role_id"`
 	Email    string    `db:"email"`
 	Password string    `db:"password"`
 }
