@@ -8,16 +8,23 @@ import (
 )
 
 type UserContext struct {
-	UserID       float64
-	UserUuid     string
-	UserName     string
-	RoleId       uint64
-	LoginSession string
-	Exp          time.Time
-	UserAgent    string
-	Ip           string
+	UserID               float64
+	UserUuid             string
+	UserName             string
+	RoleId               uint64
+	LoginSession         string
+	Exp                  time.Time
+	KeyAliasForWebsocket string
+	UserAgent            string
+	Ip                   string
 }
-
+type UserSession struct {
+	UserID       int64  `db:"id" json:"user_id"`
+	UserUUID     string `db:"user_uuid" json:"user_uuid"`
+	UserName     string `db:"user_name" json:"user_name"`
+	RoleID       int64  `db:"role_id" json:"role_id"`
+	LoginSession string `db:"login_session" json:"login_session"`
+}
 type PlayerContext struct {
 	PlayerID     float64   `json:"player_id"`
 	UserName     string    `json:"user_name"`
@@ -28,6 +35,7 @@ type PlayerContext struct {
 	MembershipId float64   `json:"membership_id"`
 	RoleID       int       `json:"role_id"`
 }
+
 type Paging struct {
 	Page    int `json:"page" query:"page" validate:"required,min=1"`
 	Perpage int `json:"per_page" query:"per_page" validate:"required,min=1"`

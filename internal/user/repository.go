@@ -701,7 +701,7 @@ func (u *UserRepoImpl) GetUserBasicInfo(username string) (*UserBasicInfoResponse
 			u.role_id, ur.user_role_name AS role_name, u.status, u.login_session, u.profile_photo, 
 			u.user_alias, u.phone_number, u.user_avatar_id, u.commission, u.status_id
 		FROM tbl_users u
-		INNER JOIN users_roles_space ur ON u.role_id = ur.id
+		INNER JOIN tbl_roles ur ON u.role_id = ur.id
 		WHERE u.deleted_at IS NULL AND ur.deleted_at IS NULL
 		AND u.user_name = $1
 	`

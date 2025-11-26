@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -88,78 +87,88 @@ func BuildSQLSort(sorts []types.Sort) string {
 func BuildSQLFilter(req []types.Filter) (string, []interface{}) {
 	var sqlFilters []string
 	var params []interface{}
+	paramIndex := 1
 
-	app_timezone := os.Getenv("APP_TIMEZONE")
-	location, err := time.LoadLocation(app_timezone)
-	if err != nil {
-		return "", nil
-	}
-
-	// Group filters by property
-	propertyMap := make(map[string][]interface{})
 	for _, filter := range req {
+		if filter.Property == "" || filter.Value == nil {
+			continue
+		}
+
+		property := filter.Property
+		operator := "="
+
+		// ✅ Support operators: __gte, __lte, __gt, __lt, __ne
+		if strings.Contains(property, "__") {
+			parts := strings.Split(property, "__")
+			property = parts[0]
+			switch parts[1] {
+			case "gte":
+				operator = ">="
+			case "lte":
+				operator = "<="
+			case "gt":
+				operator = ">"
+			case "lt":
+				operator = "<"
+			case "ne":
+				operator = "!="
+			}
+		}
+
+		// ✅ Handle BETWEEN for slice values
 		switch v := filter.Value.(type) {
-		case string:
-			if intVal, err := strconv.Atoi(v); err == nil {
-				filter.Value = intVal
-			} else if boolVal, err := strconv.ParseBool(v); err == nil {
-				filter.Value = boolVal
-			}
-		}
-		propertyMap[filter.Property] = append(propertyMap[filter.Property], filter.Value)
-	}
-
-	placeholderIndex := 1
-	for property, values := range propertyMap {
-		if len(values) > 1 {
-			// Use IN clause
-			var placeholders []string
-			for _, val := range values {
-				placeholders = append(placeholders, fmt.Sprintf("$%d", placeholderIndex))
-				params = append(params, val)
-				placeholderIndex++
-			}
-			sqlFilters = append(sqlFilters, fmt.Sprintf("%s IN (%s)", property, strings.Join(placeholders, ", ")))
-		} else {
-			value := values[0]
-			paramPlaceholder := fmt.Sprintf("$%d", placeholderIndex)
-
-			switch v := value.(type) {
-			case int, bool:
-				sqlFilters = append(sqlFilters, fmt.Sprintf("%s = %s", property, paramPlaceholder))
-				params = append(params, v)
-				placeholderIndex++
-
-			case string:
-				// LIKE
-				if strings.Contains(v, "%") {
-					sqlFilters = append(sqlFilters, fmt.Sprintf("%s LIKE %s", property, paramPlaceholder))
-					params = append(params, v)
-					placeholderIndex++
-
-				} else if dateValue, err := time.Parse("2006-01-02", v); err == nil {
-					// BETWEEN for date
-					start := time.Date(dateValue.Year(), dateValue.Month(), dateValue.Day(), 0, 0, 0, 0, location)
-					end := start.Add(24 * time.Hour).Add(-time.Second)
-
-					sqlFilters = append(sqlFilters, fmt.Sprintf("%s BETWEEN $%d AND $%d", property, placeholderIndex, placeholderIndex+1))
-					params = append(params, start, end)
-					placeholderIndex += 2
-
-				} else {
-					// Regular string equality
-					sqlFilters = append(sqlFilters, fmt.Sprintf("%s = %s", property, paramPlaceholder))
-					params = append(params, v)
-					placeholderIndex++
+		case []interface{}:
+			if len(v) == 2 {
+				// Try to convert date strings to time.Time
+				startStr, ok1 := v[0].(string)
+				endStr, ok2 := v[1].(string)
+				if ok1 && ok2 {
+					if startTime, err := time.Parse("2006-01-02", startStr); err == nil {
+						if endTime, err := time.Parse("2006-01-02", endStr); err == nil {
+							v[0] = startTime
+							v[1] = endTime.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+						}
+					}
 				}
-			default:
-				// fallback (ignore unsupported types)
+
+				sqlFilters = append(sqlFilters, fmt.Sprintf("%s BETWEEN $%d AND $%d", property, paramIndex, paramIndex+1))
+				params = append(params, v[0], v[1])
+				paramIndex += 2
+				continue
 			}
 		}
+
+		// ✅ Auto-convert types for single values
+		switch val := filter.Value.(type) {
+		case string:
+			// Try parse date
+			if t, err := time.Parse("2006-01-02", val); err == nil {
+				filter.Value = t
+			} else if intValue, err := strconv.Atoi(val); err == nil {
+				filter.Value = intValue
+			} else if boolValue, err := strconv.ParseBool(val); err == nil {
+				filter.Value = boolValue
+			}
+		}
+
+		// Build SQL by final type
+		switch val := filter.Value.(type) {
+		case int, bool, time.Time:
+			sqlFilters = append(sqlFilters, fmt.Sprintf("%s %s $%d", property, operator, paramIndex))
+			params = append(params, val)
+		case string:
+			if strings.Contains(val, "%") {
+				sqlFilters = append(sqlFilters, fmt.Sprintf("%s LIKE $%d", property, paramIndex))
+			} else {
+				sqlFilters = append(sqlFilters, fmt.Sprintf("%s %s $%d", property, operator, paramIndex))
+			}
+			params = append(params, val)
+		}
+
+		paramIndex++
 	}
 
-	filterClause := strings.Join(sqlFilters, " AND ")
-	return filterClause, params
+	return strings.Join(sqlFilters, " AND "), params
 }
 
 // BuildSQLFilter builds WHERE clause from Filter objects

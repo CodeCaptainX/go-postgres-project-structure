@@ -26,7 +26,6 @@ func NewHandler(db *sqlx.DB) *UserHandler {
 		db: db,
 		userService: func(c *fiber.Ctx) UserCreator {
 			UserContext := c.Locals("UserContext")
-			// fmt.Println("🚀 ~ file: hanlder.go ~ line 29 ~ userService:func ~ UserContext : ", UserContext)
 
 			var uCtx types.UserContext
 			// Convert map to UserContext struct
@@ -52,6 +51,7 @@ func NewHandler(db *sqlx.DB) *UserHandler {
 // @Success 200 {object} map[string]interface{}
 // @Failure 400 {object} map[string]interface{}
 // @Router /api/admin/v1/user/profile [get]
+
 func (h *UserHandler) GetLoginSession(c *fiber.Ctx) error {
 	login_session := c.Params("login_session")
 	fmt.Println("login_session", login_session)
