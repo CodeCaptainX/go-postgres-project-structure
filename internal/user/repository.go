@@ -50,8 +50,8 @@ func (u *UserRepoImpl) GetLoginSession(login_session string) (bool, *responses.E
 
 	smg_error := fmt.Errorf("invalid login session")
 	custom_log.NewCustomLog("login_failed", smg_error.Error())
-	err_resp := &responses.ErrorResponse{}
-	return true, err_resp.NewErrorResponse("login_failed", smg_error)
+
+	return true, responses.NewErrorResponse("login_failed", smg_error)
 }
 
 // Test URL endpoint: {{ _.host }}/api/v1/admin/user?paging_options[page]=1&paging_options[per_page]=10&sorts[0][property]=u.id&sorts[0][direction]=desc&sorts[1][property]=u.user_name&sorts[1][direction]=desc&filters[0][property]=u.status_id&filters[0][value]=1
@@ -113,8 +113,8 @@ func (u *UserRepoImpl) Show(userShowRequest UserShowRequest) (*UserResponse, *re
 	err := u.db.Select(&users, query, argsFilters...)
 	if err != nil {
 		custom_log.NewCustomLog("user_show_failed", err.Error(), "error")
-		errMsg := &responses.ErrorResponse{}
-		return nil, errMsg.NewErrorResponse("user_show_failed", fmt.Errorf("cannot select user: database error"))
+
+		return nil, responses.NewErrorResponse("user_show_failed", fmt.Errorf("cannot select user: database error"))
 	}
 
 	// Count query for total records
@@ -129,8 +129,8 @@ func (u *UserRepoImpl) Show(userShowRequest UserShowRequest) (*UserResponse, *re
 	err = u.db.Get(&totalCount, countQuery, argsFilters...)
 	if err != nil {
 		custom_log.NewCustomLog("user_show_failed", err.Error(), "error")
-		errMsg := &responses.ErrorResponse{}
-		return nil, errMsg.NewErrorResponse("user_show_failed", fmt.Errorf("cannot get total count: database error"))
+
+		return nil, responses.NewErrorResponse("user_show_failed", fmt.Errorf("cannot get total count: database error"))
 	}
 
 	return &UserResponse{
@@ -184,8 +184,8 @@ func (u *UserRepoImpl) ShowOne(user_uuid uuid.UUID) (*UserResponse, *responses.E
 	err := u.db.Get(&users, query, user_uuid)
 	if err != nil {
 		custom_log.NewCustomLog("user_showone_failed", err.Error(), "error")
-		err_msg := &responses.ErrorResponse{}
-		return nil, err_msg.NewErrorResponse("user_showone_failed", fmt.Errorf("cannot select user: database error"))
+
+		return nil, responses.NewErrorResponse("user_showone_failed", fmt.Errorf("cannot select user: database error"))
 	}
 
 	return &UserResponse{Users: []User{users}, Total: 0}, nil
@@ -198,8 +198,8 @@ func (u *UserRepoImpl) Create(usreq UserNewRequest) (*UserResponse, *responses.E
 	tx, err := u.db.BeginTxx(context.Background(), &sql.TxOptions{})
 	if err != nil {
 		custom_log.NewCustomLog("user_create_failed", err.Error(), "error")
-		err_msg := &responses.ErrorResponse{}
-		return nil, err_msg.NewErrorResponse("user_create_failed", fmt.Errorf("cannot begin transaction"))
+
+		return nil, responses.NewErrorResponse("user_create_failed", fmt.Errorf("cannot begin transaction"))
 	}
 
 	defer func() {
@@ -228,8 +228,8 @@ func (u *UserRepoImpl) Create(usreq UserNewRequest) (*UserResponse, *responses.E
 	err = userAddModel.New(usreq, u.userCtx, tx)
 	if err != nil {
 		custom_log.NewCustomLog("user_create_failed", err.Error())
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_create_failed", err)
+
+		return nil, responses.NewErrorResponse("user_create_failed", err)
 	}
 
 	// Insert query
@@ -264,16 +264,13 @@ func (u *UserRepoImpl) Create(usreq UserNewRequest) (*UserResponse, *responses.E
 
 	if err != nil {
 		custom_log.NewCustomLog("user_create_failed", err.Error(), "error")
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_create_failed", err)
+		return nil, responses.NewErrorResponse("user_create_failed", err)
 	}
-
 	// Commit transaction
 	err = tx.Commit()
 	if err != nil {
 		custom_log.NewCustomLog("user_create_failed", err.Error(), "error")
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_create_failed", fmt.Errorf("cannot commit transaction"))
+		return nil, responses.NewErrorResponse("user_create_failed", fmt.Errorf("cannot commit transaction"))
 	}
 
 	// Add Audit - Update this function to use sqlx
@@ -296,8 +293,8 @@ func (u *UserRepoImpl) Update(user_uuid uuid.UUID, usreq UserUpdateRequest) (*Us
 	tx, err := u.db.BeginTxx(context.Background(), &sql.TxOptions{})
 	if err != nil {
 		custom_log.NewCustomLog("user_update_failed", err.Error(), "error")
-		err_msg := &responses.ErrorResponse{}
-		return nil, err_msg.NewErrorResponse("user_update_failed", fmt.Errorf("cannot begin transaction"))
+
+		return nil, responses.NewErrorResponse("user_update_failed", fmt.Errorf("cannot begin transaction"))
 	}
 
 	defer func() {
@@ -310,8 +307,8 @@ func (u *UserRepoImpl) Update(user_uuid uuid.UUID, usreq UserUpdateRequest) (*Us
 	err = userUpdateModel.New(user_uuid, usreq, u.userCtx, tx)
 	if err != nil {
 		custom_log.NewCustomLog("user_update_failed", err.Error())
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_update_failed", err)
+
+		return nil, responses.NewErrorResponse("user_update_failed", err)
 	}
 
 	// Update query - Using $1, $2, etc. for PostgreSQL
@@ -343,16 +340,16 @@ func (u *UserRepoImpl) Update(user_uuid uuid.UUID, usreq UserUpdateRequest) (*Us
 
 	if err != nil {
 		custom_log.NewCustomLog("user_update_failed", err.Error(), "error")
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_update_failed", fmt.Errorf("cannot execute update"))
+
+		return nil, responses.NewErrorResponse("user_update_failed", fmt.Errorf("cannot execute update"))
 	}
 
 	// Commit transaction
 	err = tx.Commit()
 	if err != nil {
 		custom_log.NewCustomLog("user_update_failed", err.Error(), "error")
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_update_failed", fmt.Errorf("cannot commit transaction"))
+
+		return nil, responses.NewErrorResponse("user_update_failed", fmt.Errorf("cannot commit transaction"))
 	}
 
 	// Add Audit
@@ -379,14 +376,14 @@ func (u *UserRepoImpl) Delete(user_uuid uuid.UUID) (*UserDeleteResponse, *respon
 
 	// 	if err != nil {
 	// 		custom_log.NewCustomLog("user_delete_failed", err.Error(), "error")
-	// 		err_resp := &responses.ErrorResponse{}
-	// 		return nil, err_resp.NewErrorResponse("user_delete_failed", fmt.Errorf("failed to check permissions"))
+	//
+	// 		return nil, responses.NewErrorResponse("user_delete_failed", fmt.Errorf("failed to check permissions"))
 	// 	}
 
 	// 	if exists {
 	// 		custom_log.NewCustomLog("user_delete_failed", "permission denied", "error")
-	// 		err_resp := &responses.ErrorResponse{}
-	// 		return nil, err_resp.NewErrorResponse("user_delete_failed", fmt.Errorf("permission denied: this user has the same or higher role than you"))
+	//
+	// 		return nil, responses.NewErrorResponse("user_delete_failed", fmt.Errorf("permission denied: this user has the same or higher role than you"))
 	// 	}
 	// }
 
@@ -395,8 +392,8 @@ func (u *UserRepoImpl) Delete(user_uuid uuid.UUID) (*UserDeleteResponse, *respon
 	location, err := time.LoadLocation(app_timezone)
 	if err != nil {
 		custom_log.NewCustomLog("user_delete_failed", fmt.Errorf("failed to load location: %w", err).Error())
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_delete_failed", fmt.Errorf("cannot delete user"))
+
+		return nil, responses.NewErrorResponse("user_delete_failed", fmt.Errorf("cannot delete user"))
 	}
 	now := time.Now().In(location)
 
@@ -406,28 +403,28 @@ func (u *UserRepoImpl) Delete(user_uuid uuid.UUID) (*UserDeleteResponse, *respon
 	fmt.Println("🚀 ~ file: repository.go ~ line 406 ~ func ~ u.userCtx.UserUuid : ", u.userCtx.UserUuid)
 	if err != nil {
 		custom_log.NewCustomLog("user_delete_failed", err.Error())
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_delete_failed", fmt.Errorf("cannot get current user ID"))
+
+		return nil, responses.NewErrorResponse("user_delete_failed", fmt.Errorf("cannot get current user ID"))
 	}
 
 	// Get target user info before deletion
 	users, err_one := u.ShowOne(user_uuid)
 	if err_one != nil {
 		custom_log.NewCustomLog("user_delete_failed", err_one.Err.Error(), "error")
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_delete_failed", fmt.Errorf("user to delete not found"))
+
+		return nil, responses.NewErrorResponse("user_delete_failed", fmt.Errorf("user to delete not found"))
 	} else if len(users.Users) <= 0 {
 		custom_log.NewCustomLog("user_delete_failed", "Cannot get info of user to delete", "error")
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_delete_failed", fmt.Errorf("user to delete not found"))
+
+		return nil, responses.NewErrorResponse("user_delete_failed", fmt.Errorf("user to delete not found"))
 	}
 
 	// Begin transaction
 	tx, err := u.db.BeginTxx(context.Background(), &sql.TxOptions{})
 	if err != nil {
 		custom_log.NewCustomLog("user_delete_failed", err.Error(), "error")
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_delete_failed", fmt.Errorf("cannot begin transaction"))
+
+		return nil, responses.NewErrorResponse("user_delete_failed", fmt.Errorf("cannot begin transaction"))
 	}
 
 	defer func() {
@@ -449,8 +446,8 @@ func (u *UserRepoImpl) Delete(user_uuid uuid.UUID) (*UserDeleteResponse, *respon
 
 	if err != nil {
 		custom_log.NewCustomLog("user_delete_failed", err.Error(), "error")
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_delete_failed", fmt.Errorf("cannot delete user"))
+
+		return nil, responses.NewErrorResponse("user_delete_failed", fmt.Errorf("cannot delete user"))
 	}
 
 	// Update login session
@@ -466,8 +463,8 @@ func (u *UserRepoImpl) Delete(user_uuid uuid.UUID) (*UserDeleteResponse, *respon
 	err = tx.Commit()
 	if err != nil {
 		custom_log.NewCustomLog("user_delete_failed", err.Error(), "error")
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_delete_failed", fmt.Errorf("cannot commit transaction"))
+
+		return nil, responses.NewErrorResponse("user_delete_failed", fmt.Errorf("cannot commit transaction"))
 	}
 
 	// Add Audit
@@ -512,8 +509,8 @@ func (u *UserRepoImpl) GetUserFormCreate() (*UserFormCreateResponse, *responses.
 	roles, err := u.GetRoles()
 	if err != nil {
 		custom_log.NewCustomLog("user_create_form_failed", err.Error(), "error")
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_create_form_failed", fmt.Errorf("cannot get roles"))
+
+		return nil, responses.NewErrorResponse("user_create_form_failed", fmt.Errorf("cannot get roles"))
 	}
 
 	var userCreateForms = []UserCreateForm{
@@ -546,14 +543,14 @@ func (u *UserRepoImpl) GetUserFormUpdate(user_uuid uuid.UUID) (*UserFormUpdateRe
 
 		if err != nil {
 			custom_log.NewCustomLog("user_update_form_failed", err.Error(), "error")
-			err_resp := &responses.ErrorResponse{}
-			return nil, err_resp.NewErrorResponse("user_update_form_failed", fmt.Errorf("failed to check permissions"))
+
+			return nil, responses.NewErrorResponse("user_update_form_failed", fmt.Errorf("failed to check permissions"))
 		}
 
 		if exists {
 			custom_log.NewCustomLog("user_update_form_failed", "permission denied", "error")
-			err_resp := &responses.ErrorResponse{}
-			return nil, err_resp.NewErrorResponse("user_update_form_failed", fmt.Errorf("permission denied: this user has the same or higher role than you"))
+
+			return nil, responses.NewErrorResponse("user_update_form_failed", fmt.Errorf("permission denied: this user has the same or higher role than you"))
 		}
 	}
 
@@ -561,20 +558,20 @@ func (u *UserRepoImpl) GetUserFormUpdate(user_uuid uuid.UUID) (*UserFormUpdateRe
 	users, err_one := u.ShowOne(user_uuid)
 	if err_one != nil {
 		custom_log.NewCustomLog("user_update_form_failed", err_one.Err.Error(), "error")
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_update_form_failed", fmt.Errorf("failed to get user info"))
+
+		return nil, responses.NewErrorResponse("user_update_form_failed", fmt.Errorf("failed to get user info"))
 	} else if len(users.Users) <= 0 {
 		custom_log.NewCustomLog("user_update_form_failed", "Cannot get user info", "error")
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_update_form_failed", fmt.Errorf("user not found"))
+
+		return nil, responses.NewErrorResponse("user_update_form_failed", fmt.Errorf("user not found"))
 	}
 
 	status := u.GetStatus()
 	roles, err := u.GetRoles()
 	if err != nil {
 		custom_log.NewCustomLog("user_update_form_failed", err.Error(), "error")
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_update_form_failed", fmt.Errorf("cannot get roles"))
+
+		return nil, responses.NewErrorResponse("user_update_form_failed", fmt.Errorf("cannot get roles"))
 	}
 
 	var userUpdateForms = []UserUpdateForm{
@@ -601,8 +598,7 @@ func (u *UserRepoImpl) Update_Password(user_uuid uuid.UUID, usreq UserUpdatePass
 	tx, err := u.db.BeginTxx(context.Background(), &sql.TxOptions{})
 	if err != nil {
 		custom_log.NewCustomLog("user_update_password_failed", err.Error(), "error")
-		err_msg := &responses.ErrorResponse{}
-		return nil, err_msg.NewErrorResponse("user_update_password_failed", fmt.Errorf("cannot begin transaction"))
+		return nil, responses.NewErrorResponse("user_update_password_failed", fmt.Errorf("cannot begin transaction"))
 	}
 
 	defer func() {
@@ -615,8 +611,8 @@ func (u *UserRepoImpl) Update_Password(user_uuid uuid.UUID, usreq UserUpdatePass
 	err = RequestChangePassword.New(user_uuid, usreq, u.userCtx, tx)
 	if err != nil {
 		custom_log.NewCustomLog("user_update_password_failed", err.Error())
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_update_password_failed", err)
+
+		return nil, responses.NewErrorResponse("user_update_password_failed", err)
 	}
 
 	// Get current user ID
@@ -624,20 +620,20 @@ func (u *UserRepoImpl) Update_Password(user_uuid uuid.UUID, usreq UserUpdatePass
 	err = u.db.Get(&by_id, "SELECT id FROM tbl_users WHERE user_uuid = $1", u.userCtx.UserUuid)
 	if err != nil {
 		custom_log.NewCustomLog("user_update_password_failed", err.Error())
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_update_password_failed", fmt.Errorf("cannot get current user ID"))
+
+		return nil, responses.NewErrorResponse("user_update_password_failed", fmt.Errorf("cannot get current user ID"))
 	}
 
 	// Get target user info
 	users, err_one := u.ShowOne(user_uuid)
 	if err_one != nil {
 		custom_log.NewCustomLog("user_update_password_failed", err_one.Err.Error(), "error")
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_update_password_failed", fmt.Errorf("user not found"))
+
+		return nil, responses.NewErrorResponse("user_update_password_failed", fmt.Errorf("user not found"))
 	} else if len(users.Users) <= 0 {
 		custom_log.NewCustomLog("user_update_password_failed", "Cannot get user info", "error")
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_update_password_failed", fmt.Errorf("user not found"))
+
+		return nil, responses.NewErrorResponse("user_update_password_failed", fmt.Errorf("user not found"))
 	}
 
 	// Update password
@@ -654,16 +650,16 @@ func (u *UserRepoImpl) Update_Password(user_uuid uuid.UUID, usreq UserUpdatePass
 
 	if err != nil {
 		custom_log.NewCustomLog("user_update_password_failed", err.Error(), "error")
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_update_password_failed", fmt.Errorf("cannot update password"))
+
+		return nil, responses.NewErrorResponse("user_update_password_failed", fmt.Errorf("cannot update password"))
 	}
 
 	// Commit transaction
 	err = tx.Commit()
 	if err != nil {
 		custom_log.NewCustomLog("user_update_password_failed", err.Error(), "error")
-		err_resp := &responses.ErrorResponse{}
-		return nil, err_resp.NewErrorResponse("user_update_password_failed", fmt.Errorf("cannot commit transaction"))
+
+		return nil, responses.NewErrorResponse("user_update_password_failed", fmt.Errorf("cannot commit transaction"))
 	}
 
 	// Add Audit
@@ -709,8 +705,7 @@ func (u *UserRepoImpl) GetUserBasicInfo(username string) (*UserBasicInfoResponse
 	err := u.db.Get(&userInfo, query, username)
 	if err != nil {
 		custom_log.NewCustomLog("get_userinfo_failed", err.Error(), "error")
-		errResp := &responses.ErrorResponse{}
-		return nil, errResp.NewErrorResponse("get_userinfo_failed", fmt.Errorf("cannot select user: %w", err))
+		return nil, responses.NewErrorResponse("get_userinfo_failed", fmt.Errorf("cannot select user: %w", err))
 	}
 
 	// Get permissions
@@ -727,8 +722,8 @@ func (u *UserRepoImpl) GetUserBasicInfo(username string) (*UserBasicInfoResponse
 	err = u.db.Select(&permissions, permQuery, userInfo.RoleId)
 	if err != nil {
 		custom_log.NewCustomLog("get_userinfo_failed", err.Error(), "warn")
-		errMsg := &responses.ErrorResponse{}
-		return nil, errMsg.NewErrorResponse("get_userinfo_failed", fmt.Errorf("cannot get user permissions: %w", err))
+
+		return nil, responses.NewErrorResponse("get_userinfo_failed", fmt.Errorf("cannot get user permissions: %w", err))
 	}
 
 	// Process permissions

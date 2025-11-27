@@ -12,7 +12,7 @@ func (e *ErrorResponse) ErrorString() string {
 		e.MessageID, e.Err)
 }
 
-func (e *ErrorResponse) NewErrorResponse(messageId string, err error) *ErrorResponse {
+func NewErrorResponse(messageId string, err error) *ErrorResponse {
 	return &ErrorResponse{
 		MessageID: messageId,
 		Err:       err,

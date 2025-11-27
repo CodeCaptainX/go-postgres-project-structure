@@ -40,7 +40,6 @@ func NewAuthRepository(dbPool *sqlx.DB, redisClient *redis.Client) AuthRepositor
 
 func (a *authRepositoryImpl) Login(username, password string) (*AuthResponse, *responses.ErrorResponse) {
 	var member MemberData
-	msg := responses.ErrorResponse{}
 
 	query := `
 		SELECT
@@ -57,7 +56,7 @@ func (a *authRepositoryImpl) Login(username, password string) (*AuthResponse, *r
 	err := a.dbPool.Get(&member, query, username, password)
 	if err != nil {
 		custom_log.NewCustomLog("member_not_found", err.Error(), "error")
-		return nil, msg.NewErrorResponse("member_not_found", fmt.Errorf("user not found. Please check the provided information"))
+		return nil, responses.NewErrorResponse("member_not_found", fmt.Errorf("user not found. Please check the provided information"))
 	}
 
 	var res AuthResponse
@@ -68,7 +67,7 @@ func (a *authRepositoryImpl) Login(username, password string) (*AuthResponse, *r
 
 	if err != nil {
 		custom_log.NewCustomLog("uuid_generate_failed", err.Error(), "error")
-		return nil, msg.NewErrorResponse("uuid_generate_failed", fmt.Errorf("failed to generate UUID. Please try again later"))
+		return nil, responses.NewErrorResponse("uuid_generate_failed", fmt.Errorf("failed to generate UUID. Please try again later"))
 	}
 
 	claims := jwt.MapClaims{
@@ -97,14 +96,14 @@ func (a *authRepositoryImpl) Login(username, password string) (*AuthResponse, *r
 	_, err = a.dbPool.Exec(updateQuery, loginSession.String(), member.ID)
 	if err != nil {
 		custom_log.NewCustomLog("session_update_failed", err.Error(), "error")
-		return nil, msg.NewErrorResponse("session_update_failed", fmt.Errorf("cannot update session"))
+		return nil, responses.NewErrorResponse("session_update_failed", fmt.Errorf("cannot update session"))
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString([]byte(secretKey))
 	if err != nil {
 		custom_log.NewCustomLog("jwt_failed", err.Error(), "error")
-		return nil, msg.NewErrorResponse("jwt_failed", fmt.Errorf("failed to get jwt"))
+		return nil, responses.NewErrorResponse("jwt_failed", fmt.Errorf("failed to get jwt"))
 	}
 
 	res.Auth.Token = tokenString
@@ -114,14 +113,13 @@ func (a *authRepositoryImpl) Login(username, password string) (*AuthResponse, *r
 	// _, err = audit.AddMemeberAuditLog(member.ID, "Login", auditDesc, 1, "userAgent", member.Username, "ip", member.ID, a.dbPool)
 	// if err != nil {
 	// 	custom_log.NewCustomLog("add_audit_log_failed", err.Error(), "error")
-	// 	return nil, msg.NewErrorResponse("add_audit_log_failed", fmt.Errorf("cannot insert data to audit log"))
+	// 	return nil, responses.NewErrorResponse("add_audit_log_failed", fmt.Errorf("cannot insert data to audit log"))
 	// }
 
 	return &res, nil
 }
 
 func (a *authRepositoryImpl) CheckSession(loginSession string) (*types.UserSession, *responses.ErrorResponse) {
-	msg := responses.ErrorResponse{}
 
 	// key := fmt.Sprintf("member:%d", int(memberID))
 	// redisUtil := redis_util.NewRedisUtil(a.redis)
@@ -159,10 +157,10 @@ func (a *authRepositoryImpl) CheckSession(loginSession string) (*types.UserSessi
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			custom_log.NewCustomLog("invalid_session_id", "invalid login session: "+loginSession, "warn")
-			return nil, msg.NewErrorResponse("invalid_session_id", fmt.Errorf("invalid login session"))
+			return nil, responses.NewErrorResponse("invalid_session_id", fmt.Errorf("invalid login session"))
 		}
 		custom_log.NewCustomLog("query_data_failed", err.Error(), "error")
-		return nil, msg.NewErrorResponse("query_data_failed", fmt.Errorf("database query error"))
+		return nil, responses.NewErrorResponse("query_data_failed", fmt.Errorf("database query error"))
 	}
 
 	// 3) Save to Redis for next time
