@@ -721,8 +721,7 @@ func (u *UserRepoImpl) GetUserBasicInfo(username string) (*UserBasicInfoResponse
 
 	err = u.db.Select(&permissions, permQuery, userInfo.RoleId)
 	if err != nil {
-		custom_log.NewCustomLog("get_userinfo_failed", err.Error(), "warn")
-
+		custom_log.NewCustomLog("get_userinfo_failed", err.Error(), "error")
 		return nil, responses.NewErrorResponse("get_userinfo_failed", fmt.Errorf("cannot get user permissions: %w", err))
 	}
 

@@ -61,15 +61,15 @@ func init() {
 				default:
 					icon = IconTrace
 				}
-				return fmt.Sprintf("%s %s : ", icon, ll)
+				return fmt.Sprintf("\n %s %s : ", icon, ll)
 			}
 			return fmt.Sprintf("%v", i)
 		},
 		FormatMessage: func(i interface{}) string {
-			return fmt.Sprintf("\n   %s%s%s", ColorBold, i, ColorReset)
+			return fmt.Sprintf("\n  %s%s%s", ColorBold, i, ColorReset)
 		},
 		FormatFieldName: func(i interface{}) string {
-			return fmt.Sprintf("\n   %s%s:%s ", ColorCyan, i, ColorReset)
+			return fmt.Sprintf("\n  %s%s:%s ", ColorCyan, i, ColorReset)
 		},
 		FormatFieldValue: func(i interface{}) string {
 			return fmt.Sprintf("%s%s%s", ColorGreen, i, ColorReset)
@@ -231,7 +231,7 @@ func (e *CustomLog) LogWithContext(fields map[string]interface{}, logType string
 		Fields(fields).
 		Logger()
 
-	msg := fmt.Sprintf("⚙️  %s() | 📂 %s:%d | 💬 %s",
+	msg := fmt.Sprintf("⚙️  %s() | 📂 %s:%d | 💬 %s ",
 		e.Function,
 		e.FullPath,
 		e.Line,

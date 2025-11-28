@@ -1,7 +1,6 @@
 package user
 
 import (
-	"encoding/json"
 	"fmt"
 	types "snack-shop/pkg/model"
 	"snack-shop/pkg/responses"
@@ -30,8 +29,7 @@ type UserService struct {
 }
 
 func NewUserService(u *types.UserContext, db *sqlx.DB) *UserService {
-	pretty, _ := json.MarshalIndent(u, "", "  ")
-	fmt.Println("🚀 UserContext Loaded:\n", string(pretty))
+	// pretty, _ := json.MarshalIndent(u, "", "  ")
 
 	r := NewUserRepoImpl(u, db)
 
